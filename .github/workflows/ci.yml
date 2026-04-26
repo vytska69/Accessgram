@@ -148,28 +148,35 @@ jobs:
         run: |
           DATE=$(date -u "+%Y-%m-%d %H:%M UTC")
           BRANCH="${GITHUB_REF_NAME}"
+          TDLIB_VER=$(brew list --versions tdlib | awk '{print $2}')
+          NOTES=/tmp/release-notes.md
+
+          # Build notes line-by-line to avoid YAML/heredoc indentation issues
+          {
+            echo "## Accessgram Dev Build"
+            echo ""
+            echo "**Branch:** \`${BRANCH}\`"
+            echo "**Commit:** [\`${SHORT_SHA}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})"
+            echo "**Build:** #${{ github.run_number }}"
+            echo ""
+            echo "### Installation"
+            echo "1. Download \`${DMG_NAME}\` below"
+            echo "2. Open the DMG and drag **Accessgram** to **Applications**"
+            echo "3. First launch: right-click -> **Open** (bypasses Gatekeeper)"
+            echo "4. Add your API credentials from [my.telegram.org](https://my.telegram.org)"
+            echo ""
+            echo "### What's included"
+            echo "- Accessgram binary (macOS 14+, Apple Silicon)"
+            echo "- TDLib ${TDLIB_VER} embedded — no separate install needed"
+            echo ""
+            echo "> Ad-hoc signed only. Notarisation requires an Apple Developer account."
+          } > "${NOTES}"
 
           # Remove previous rolling release + tag (ignore errors if they don't exist yet)
           gh release delete latest --yes 2>/dev/null || true
           git push origin :refs/tags/latest 2>/dev/null || true
 
-          gh release create latest "$DMG_NAME" \
-            --title "Dev Build · $DATE" \
+          gh release create latest "${DMG_NAME}" \
+            --title "Dev Build - ${DATE}" \
             --prerelease \
-            --notes "## Accessgram Dev Build
-
-**Branch:** \`${BRANCH}\`
-**Commit:** [\`${SHORT_SHA}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
-**Build:** #${{ github.run_number }}
-
-### Installation
-1. Download \`${DMG_NAME}\` below
-2. Open the DMG and drag **Accessgram** to **Applications**
-3. First launch: right-click → **Open** (bypasses Gatekeeper for unsigned builds)
-4. Add your API credentials in \`AppViewModel.swift\` from [my.telegram.org](https://my.telegram.org)
-
-### What's included
-- Accessgram binary (macOS 14+, Apple Silicon)
-- TDLib $(brew list --versions tdlib | awk '{print $2}') embedded — no separate install needed
-
-> ⚠️ Ad-hoc signed only. Notarisation requires an Apple Developer account."
+            --notes-file "${NOTES}"

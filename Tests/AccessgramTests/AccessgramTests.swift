@@ -1,6 +1,6 @@
+@testable import Accessgram
 import Foundation
 import Testing
-@testable import Accessgram
 
 // MARK: - Chat Model Tests
 

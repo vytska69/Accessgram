@@ -196,6 +196,17 @@ enum UserStatus {
     case lastMonth
     case unknown
 
+    init(json: [String: Any]) {
+        switch json["@type"] as? String {
+        case "userStatusOnline":    self = .online
+        case "userStatusOffline":   self = .offline(lastSeen: json["was_online"] as? Int32 ?? 0)
+        case "userStatusRecently":  self = .recently
+        case "userStatusLastWeek":  self = .lastWeek
+        case "userStatusLastMonth": self = .lastMonth
+        default:                    self = .unknown
+        }
+    }
+
     var description: String {
         switch self {
         case .online:
@@ -234,72 +245,85 @@ enum TDUpdate {
 
     init?(json: [String: Any]) {
         guard let type = json["@type"] as? String else { return nil }
+        if let update = Self.parseMessageUpdate(type: type, json: json) {
+            self = update
+        } else if let update = Self.parseChatUpdate(type: type, json: json) {
+            self = update
+        } else if let update = Self.parseUserUpdate(type: type, json: json) {
+            self = update
+        } else {
+            self = .unknown(type: type)
+        }
+    }
+
+    // MARK: - Private parsers (keeps cyclomatic_complexity under limit)
+
+    private static func parseMessageUpdate(type: String, json: [String: Any]) -> TDUpdate? {
         switch type {
         case "updateAuthorizationState":
             guard let stateJSON = json["authorization_state"] as? [String: Any],
                   let stateType = stateJSON["@type"] as? String else { return nil }
-            self = .authorizationState(AuthorizationState(type: stateType))
+            return .authorizationState(AuthorizationState(type: stateType))
 
         case "updateNewMessage":
             guard let msgJSON = json["message"] as? [String: Any],
                   let msg = TDMessage(json: msgJSON) else { return nil }
-            self = .newMessage(msg)
+            return .newMessage(msg)
 
         case "updateMessageContent":
-            let chatId = json["chat_id"] as? Int64 ?? 0
-            let msgId = json["message_id"] as? Int64 ?? 0
-            self = .messageEdited(chatId: chatId, messageId: msgId)
+            return .messageEdited(
+                chatId: json["chat_id"] as? Int64 ?? 0,
+                messageId: json["message_id"] as? Int64 ?? 0
+            )
 
         case "updateDeleteMessages":
-            let chatId = json["chat_id"] as? Int64 ?? 0
-            let ids = json["message_ids"] as? [Int64] ?? []
-            self = .messagesDeleted(chatId: chatId, ids: ids)
+            return .messagesDeleted(
+                chatId: json["chat_id"] as? Int64 ?? 0,
+                ids: json["message_ids"] as? [Int64] ?? []
+            )
 
         case "updateMessageSendSucceeded":
             guard let msgJSON = json["message"] as? [String: Any],
                   let msg = TDMessage(json: msgJSON) else { return nil }
-            let oldId = json["old_message_id"] as? Int64 ?? 0
-            self = .messageSendSucceeded(message: msg, oldId: oldId)
+            return .messageSendSucceeded(message: msg, oldId: json["old_message_id"] as? Int64 ?? 0)
 
         case "updateMessageSendFailed":
             guard let msgJSON = json["message"] as? [String: Any],
                   let msg = TDMessage(json: msgJSON) else { return nil }
-            let oldId = json["old_message_id"] as? Int64 ?? 0
             let err = (json["error"] as? [String: Any])?["message"] as? String ?? "Unknown error"
-            self = .messageSendFailed(chatId: msg.chatId, oldId: oldId, error: err)
-
-        case "updateChatLastMessage":
-            let chatId = json["chat_id"] as? Int64 ?? 0
-            let msg = (json["last_message"] as? [String: Any]).flatMap { TDMessage(json: $0) }
-            self = .chatLastMessage(chatId: chatId, message: msg)
-
-        case "updateChatReadInbox":
-            let chatId = json["chat_id"] as? Int64 ?? 0
-            let lastId = json["last_read_inbox_message_id"] as? Int64 ?? 0
-            let unread = json["unread_count"] as? Int ?? 0
-            self = .chatReadInbox(chatId: chatId, lastReadId: lastId, unreadCount: unread)
-
-        case "updateChatPosition":
-            let chatId = json["chat_id"] as? Int64 ?? 0
-            self = .chatPosition(chatId: chatId)
-
-        case "updateUserStatus":
-            let userId = json["user_id"] as? Int64 ?? 0
-            let statusJSON = json["status"] as? [String: Any] ?? [:]
-            let status: UserStatus
-            switch statusJSON["@type"] as? String {
-            case "userStatusOnline":    status = .online
-            case "userStatusOffline":   status = .offline(lastSeen: statusJSON["was_online"] as? Int32 ?? 0)
-            case "userStatusRecently":  status = .recently
-            case "userStatusLastWeek":  status = .lastWeek
-            case "userStatusLastMonth": status = .lastMonth
-            default:                    status = .unknown
-            }
-            self = .userStatus(userId: userId, status: status)
+            return .messageSendFailed(chatId: msg.chatId, oldId: json["old_message_id"] as? Int64 ?? 0, error: err)
 
         default:
-            self = .unknown(type: type)
+            return nil
         }
+    }
+
+    private static func parseChatUpdate(type: String, json: [String: Any]) -> TDUpdate? {
+        switch type {
+        case "updateChatLastMessage":
+            let msg = (json["last_message"] as? [String: Any]).flatMap { TDMessage(json: $0) }
+            return .chatLastMessage(chatId: json["chat_id"] as? Int64 ?? 0, message: msg)
+
+        case "updateChatReadInbox":
+            return .chatReadInbox(
+                chatId: json["chat_id"] as? Int64 ?? 0,
+                lastReadId: json["last_read_inbox_message_id"] as? Int64 ?? 0,
+                unreadCount: json["unread_count"] as? Int ?? 0
+            )
+
+        case "updateChatPosition":
+            return .chatPosition(chatId: json["chat_id"] as? Int64 ?? 0)
+
+        default:
+            return nil
+        }
+    }
+
+    private static func parseUserUpdate(type: String, json: [String: Any]) -> TDUpdate? {
+        guard type == "updateUserStatus" else { return nil }
+        let userId = json["user_id"] as? Int64 ?? 0
+        let statusJSON = json["status"] as? [String: Any] ?? [:]
+        return .userStatus(userId: userId, status: UserStatus(json: statusJSON))
     }
 }
 

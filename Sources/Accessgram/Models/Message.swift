@@ -34,14 +34,14 @@ struct Message: Identifiable, Hashable {
         parts.append(content.accessibilityDescription)
         parts.append("at \(timeString)")
         if isOutgoing && isRead { parts.append("Read") }
-        if let _ = editDate { parts.append("Edited") }
+        if editDate != nil { parts.append("Edited") }
         return parts.joined(separator: ", ")
     }
 
     // MARK: - Hashable
 
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
-    static func == (lhs: Message, rhs: Message) -> Bool { lhs.id == rhs.id }
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
 
     // MARK: - Init from TDMessage
 

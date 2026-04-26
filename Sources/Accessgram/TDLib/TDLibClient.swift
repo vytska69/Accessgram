@@ -1,5 +1,5 @@
-import Foundation
 import CTDLib
+import Foundation
 
 // MARK: - TDLib Client
 

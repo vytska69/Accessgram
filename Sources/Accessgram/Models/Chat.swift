@@ -23,8 +23,8 @@ struct Chat: Identifiable, Hashable {
         if let last = lastMessage {
             parts.append("Last: \(last.accessibilityPreview)")
         }
-        if isMuted   { parts.append("Muted") }
-        if isPinned  { parts.append("Pinned") }
+        if isMuted { parts.append("Muted") }
+        if isPinned { parts.append("Pinned") }
         return parts.joined(separator: ", ")
     }
 
@@ -33,7 +33,7 @@ struct Chat: Identifiable, Hashable {
     // MARK: - Hashable
 
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
-    static func == (lhs: Chat, rhs: Chat) -> Bool { lhs.id == rhs.id }
+    static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
 
     // MARK: - Init
 

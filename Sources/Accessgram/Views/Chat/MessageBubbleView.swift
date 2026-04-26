@@ -93,8 +93,7 @@ struct MessageBubbleView: View {
                         .background(.black.opacity(0.6))
                         .clipShape(RoundedRectangle(cornerRadius: 4))
                         .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity,
-                               alignment: .bottomLeading)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .padding(6)
                 }
                 if !caption.isEmpty { Text(caption).font(.body) }

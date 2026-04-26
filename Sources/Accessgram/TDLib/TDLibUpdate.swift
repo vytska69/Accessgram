@@ -258,7 +258,7 @@ enum TDUpdate {
 
     // MARK: - Private parsers (keeps cyclomatic_complexity under limit)
 
-    private static func parseMessageUpdate(type: String, json: [String: Any]) -> TDUpdate? {
+    private static func parseMessageUpdate(type: String, json: [String: Any]) -> Self? {
         switch type {
         case "updateAuthorizationState":
             guard let stateJSON = json["authorization_state"] as? [String: Any],
@@ -298,7 +298,7 @@ enum TDUpdate {
         }
     }
 
-    private static func parseChatUpdate(type: String, json: [String: Any]) -> TDUpdate? {
+    private static func parseChatUpdate(type: String, json: [String: Any]) -> Self? {
         switch type {
         case "updateChatLastMessage":
             let msg = (json["last_message"] as? [String: Any]).flatMap { TDMessage(json: $0) }
@@ -319,7 +319,7 @@ enum TDUpdate {
         }
     }
 
-    private static func parseUserUpdate(type: String, json: [String: Any]) -> TDUpdate? {
+    private static func parseUserUpdate(type: String, json: [String: Any]) -> Self? {
         guard type == "updateUserStatus" else { return nil }
         let userId = json["user_id"] as? Int64 ?? 0
         let statusJSON = json["status"] as? [String: Any] ?? [:]

@@ -159,12 +159,12 @@ struct AuthorizationStateTests {
     func allTypes() {
         let cases: [(String, AuthorizationState)] = [
             ("authorizationStateWaitTdlibParameters", .waitTdlibParameters),
-            ("authorizationStateWaitPhoneNumber",     .waitPhoneNumber),
-            ("authorizationStateWaitCode",            .waitCode),
-            ("authorizationStateWaitPassword",        .waitPassword),
-            ("authorizationStateReady",               .ready),
-            ("authorizationStateClosed",              .closed),
-            ("somethingElse",                         .closed),
+            ("authorizationStateWaitPhoneNumber", .waitPhoneNumber),
+            ("authorizationStateWaitCode", .waitCode),
+            ("authorizationStateWaitPassword", .waitPassword),
+            ("authorizationStateReady", .ready),
+            ("authorizationStateClosed", .closed),
+            ("somethingElse", .closed),
         ]
         for (type, expected) in cases {
             #expect(AuthorizationState(type: type) == expected, "\(type) should map to \(expected)")

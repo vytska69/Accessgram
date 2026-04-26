@@ -61,7 +61,7 @@ struct MessageBubbleView: View {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.secondary.opacity(0.2))
-                        .aspectRatio(4/3, contentMode: .fit)
+                        .aspectRatio(4 / 3, contentMode: .fit)
                         .frame(maxWidth: 240)
                     Image(systemName: "photo")
                         .font(.largeTitle)

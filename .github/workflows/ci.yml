@@ -10,16 +10,16 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# ── Build & Test ──────────────────────────────────────────────────────────────
 jobs:
   build-and-test:
     name: Build & Test (macOS)
-    runs-on: macos-14          # Apple Silicon – matches real user hardware
+    runs-on: macos-14
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ── Homebrew cache ──────────────────────────────────────────────────
       - name: Cache Homebrew packages
         uses: actions/cache@v4
         with:
@@ -35,7 +35,6 @@ jobs:
       - name: Export pkg-config path
         run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"
 
-      # ── Swift PM cache ──────────────────────────────────────────────────
       - name: Cache Swift PM
         uses: actions/cache@v4
         with:
@@ -46,7 +45,6 @@ jobs:
       - name: Resolve dependencies
         run: swift package resolve
 
-      # ── Build ───────────────────────────────────────────────────────────
       - name: Build (debug)
         run: swift build -c debug 2>&1 | tee build-debug.log
         env:
@@ -57,13 +55,12 @@ jobs:
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
-      # ── Tests ───────────────────────────────────────────────────────────
       - name: Run tests
         run: swift test --parallel 2>&1 | tee test.log
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
-      - name: Upload build logs
+      - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
@@ -71,7 +68,16 @@ jobs:
           path: "*.log"
           retention-days: 7
 
-  # ── Lint ─────────────────────────────────────────────────────────────────
+      # Pass the release binary to the release job without rebuilding
+      - name: Upload release binary
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Accessgram-binary
+          path: .build/release/Accessgram
+          retention-days: 1
+
+  # ── Lint ────────────────────────────────────────────────────────────────────
   lint:
     name: SwiftLint
     runs-on: macos-14
@@ -90,3 +96,80 @@ jobs:
 
       - name: Lint
         run: swiftlint lint --strict --reporter github-actions-logging
+
+  # ── Release ─────────────────────────────────────────────────────────────────
+  release:
+    name: Package DMG & Publish Release
+    runs-on: macos-14
+    needs: [build-and-test]
+    # Only run on direct pushes (not pull requests)
+    if: github.event_name == 'push'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /opt/homebrew/Cellar/tdlib
+          key: homebrew-tdlib-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: homebrew-tdlib-${{ runner.os }}-
+
+      - name: Install TDLib
+        run: brew install tdlib
+
+      - name: Download release binary
+        uses: actions/download-artifact@v4
+        with:
+          name: Accessgram-binary
+          path: .build/release/
+
+      - name: Make binary executable
+        run: chmod +x .build/release/Accessgram
+
+      - name: Assemble .app bundle
+        run: bash Scripts/bundle.sh .build/release/Accessgram ${{ github.run_number }}
+
+      - name: Create DMG
+        run: |
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
+          bash Scripts/make-dmg.sh "$SHORT_SHA"
+          echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
+          echo "DMG_NAME=Accessgram-${SHORT_SHA}.dmg" >> "$GITHUB_ENV"
+
+      - name: Publish rolling release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE=$(date -u "+%Y-%m-%d %H:%M UTC")
+          BRANCH="${GITHUB_REF_NAME}"
+
+          # Remove previous rolling release + tag (ignore errors if they don't exist yet)
+          gh release delete latest --yes 2>/dev/null || true
+          git push origin :refs/tags/latest 2>/dev/null || true
+
+          gh release create latest "$DMG_NAME" \
+            --title "Dev Build · $DATE" \
+            --prerelease \
+            --notes "## Accessgram Dev Build
+
+**Branch:** \`${BRANCH}\`
+**Commit:** [\`${SHORT_SHA}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})
+**Build:** #${{ github.run_number }}
+
+### Installation
+1. Download \`${DMG_NAME}\` below
+2. Open the DMG and drag **Accessgram** to **Applications**
+3. First launch: right-click → **Open** (bypasses Gatekeeper for unsigned builds)
+4. Add your API credentials in \`AppViewModel.swift\` from [my.telegram.org](https://my.telegram.org)
+
+### What's included
+- Accessgram binary (macOS 14+, Apple Silicon)
+- TDLib $(brew list --versions tdlib | awk '{print $2}') embedded — no separate install needed
+
+> ⚠️ Ad-hoc signed only. Notarisation requires an Apple Developer account."

@@ -69,15 +69,6 @@ jobs:
           path: "*.log"
           retention-days: 7
 
-      # Pass the release binary to the release job without rebuilding
-      - name: Upload release binary
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v4
-        with:
-          name: Accessgram-binary
-          path: .build/release/Accessgram
-          retention-days: 1
-
   # ── Lint ────────────────────────────────────────────────────────────────────
   lint:
     name: SwiftLint
@@ -103,7 +94,6 @@ jobs:
     name: Package DMG & Publish Release
     runs-on: macos-14
     needs: [build-and-test]
-    # Only run on direct pushes (not pull requests)
     if: github.event_name == 'push'
     permissions:
       contents: write
@@ -124,14 +114,23 @@ jobs:
       - name: Install TDLib
         run: brew install tdlib
 
-      - name: Download release binary
-        uses: actions/download-artifact@v4
-        with:
-          name: Accessgram-binary
-          path: .build/release/
+      - name: Export pkg-config path
+        run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"
 
-      - name: Make binary executable
-        run: chmod +x .build/release/Accessgram
+      - name: Cache Swift PM
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved', 'Package.swift') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build (release)
+        run: swift build -c release
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
       - name: Assemble .app bundle
         run: bash Scripts/bundle.sh .build/release/Accessgram ${{ github.run_number }}
@@ -152,7 +151,6 @@ jobs:
           TDLIB_VER=$(brew list --versions tdlib | awk '{print $2}')
           NOTES=/tmp/release-notes.md
 
-          # Build notes line-by-line to avoid YAML/heredoc indentation issues
           {
             echo "## Accessgram Dev Build"
             echo ""
@@ -168,12 +166,11 @@ jobs:
             echo ""
             echo "### What's included"
             echo "- Accessgram binary (macOS 14+, Apple Silicon)"
-            echo "- TDLib ${TDLIB_VER} embedded — no separate install needed"
+            echo "- TDLib ${TDLIB_VER} embedded -- no separate install needed"
             echo ""
             echo "> Ad-hoc signed only. Notarisation requires an Apple Developer account."
           } > "${NOTES}"
 
-          # Remove previous rolling release + tag (ignore errors if they don't exist yet)
           gh release delete latest --yes 2>/dev/null || true
           git push origin :refs/tags/latest 2>/dev/null || true
 

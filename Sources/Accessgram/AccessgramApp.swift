@@ -2,7 +2,7 @@ import SwiftUI
 
 @main
 struct AccessgramApp: App {
-    @State private var appViewModel = AppViewModel()
+    @State private var appViewModel = MainActor.assumeIsolated { AppViewModel() }
 
     var body: some Scene {
         WindowGroup {

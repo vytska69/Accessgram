@@ -21,6 +21,11 @@ let package = Package(
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]
+        ),
+        .testTarget(
+            name: "AccessgramTests",
+            dependencies: ["Accessgram"],
+            path: "Tests/AccessgramTests"
         )
     ]
 )

@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Authorization State
 
-enum AuthorizationState {
+enum AuthorizationState: Equatable {
     case waitTdlibParameters
     case waitPhoneNumber
     case waitCode

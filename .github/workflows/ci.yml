@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test (macOS)
+    runs-on: macos-14          # Apple Silicon – matches real user hardware
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── Homebrew cache ──────────────────────────────────────────────────
+      - name: Cache Homebrew packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/Library/Caches/Homebrew
+            /opt/homebrew/Cellar/tdlib
+          key: homebrew-tdlib-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: homebrew-tdlib-${{ runner.os }}-
+
+      - name: Install TDLib
+        run: brew install tdlib
+
+      - name: Export pkg-config path
+        run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"
+
+      # ── Swift PM cache ──────────────────────────────────────────────────
+      - name: Cache Swift PM
+        uses: actions/cache@v4
+        with:
+          path: .build
+          key: spm-${{ runner.os }}-${{ hashFiles('Package.resolved', 'Package.swift') }}
+          restore-keys: spm-${{ runner.os }}-
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      # ── Build ───────────────────────────────────────────────────────────
+      - name: Build (debug)
+        run: swift build -c debug 2>&1 | tee build-debug.log
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+      - name: Build (release)
+        run: swift build -c release 2>&1 | tee build-release.log
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+      # ── Tests ───────────────────────────────────────────────────────────
+      - name: Run tests
+        run: swift test --parallel 2>&1 | tee test.log
+        env:
+          DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
+
+      - name: Upload build logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: "*.log"
+          retention-days: 7
+
+  # ── Lint ─────────────────────────────────────────────────────────────────
+  lint:
+    name: SwiftLint
+    runs-on: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache SwiftLint binary
+        uses: actions/cache@v4
+        with:
+          path: /opt/homebrew/Cellar/swiftlint
+          key: swiftlint-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Lint
+        run: swiftlint lint --strict --reporter github-actions-logging

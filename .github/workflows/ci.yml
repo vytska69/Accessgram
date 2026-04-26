@@ -142,6 +142,11 @@ jobs:
           echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
           echo "DMG_NAME=Accessgram-${SHORT_SHA}.dmg" >> "$GITHUB_ENV"
 
+      - name: Verify DMG exists
+        run: |
+          echo "DMG_NAME=${DMG_NAME}"
+          ls -lh "${DMG_NAME}"
+
       - name: Publish rolling release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -171,8 +176,8 @@ jobs:
             echo "> Ad-hoc signed only. Notarisation requires an Apple Developer account."
           } > "${NOTES}"
 
-          gh release delete latest --yes 2>/dev/null || true
-          git push origin :refs/tags/latest 2>/dev/null || true
+          # Delete release + its tag together; safe to fail on first ever run
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
 
           gh release create latest "${DMG_NAME}" \
             --title "Dev Build - ${DATE}" \

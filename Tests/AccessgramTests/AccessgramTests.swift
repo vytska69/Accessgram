@@ -1,5 +1,5 @@
-import Testing
 import Foundation
+import Testing
 @testable import Accessgram
 
 // MARK: - Chat Model Tests
@@ -164,7 +164,7 @@ struct AuthorizationStateTests {
             ("authorizationStateWaitPassword", .waitPassword),
             ("authorizationStateReady", .ready),
             ("authorizationStateClosed", .closed),
-            ("somethingElse", .closed),
+            ("somethingElse", .closed)
         ]
         for (type, expected) in cases {
             #expect(AuthorizationState(type: type) == expected, "\(type) should map to \(expected)")

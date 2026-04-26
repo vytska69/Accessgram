@@ -60,7 +60,7 @@ private struct ErrorView: View {
                 .foregroundStyle(.secondary)
 
             Button("Try Again") {
-                Task { await AppViewModel().boot() }
+                Task { await app.boot() }
             }
             .buttonStyle(.borderedProminent)
             .accessibilityLabel("Try connecting again")
@@ -71,7 +71,3 @@ private struct ErrorView: View {
     }
 }
 
-// AppViewModel.boot() is private; expose a retry helper
-extension AppViewModel {
-    func boot() async {}  // no-op placeholder; real boot happens in init
-}

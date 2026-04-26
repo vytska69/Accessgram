@@ -9,7 +9,9 @@ struct ChatView: View {
     init(chat: Chat, client: TDLibClient) {
         self.chat = chat
         self.client = client
-        _viewModel = State(initialValue: ChatViewModel(chat: chat, client: client))
+        _viewModel = State(initialValue: MainActor.assumeIsolated {
+            ChatViewModel(chat: chat, client: client)
+        })
     }
 
     var body: some View {
@@ -104,7 +106,7 @@ private struct ReplyPreviewBar: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(message.isOutgoing ? "You" : message.senderName)
                     .font(.caption.bold())
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
 
                 Text(message.content.previewText)
                     .font(.caption)

@@ -5,12 +5,8 @@ struct MainView: View {
     @State private var chatListVM: ChatListViewModel?
     @State private var selectedChatId: Int64?
 
-    private var selectedChat: Chat? {
-        guard let id = selectedChatId else { return nil }
-        return chatListVM?.chats.first { $0.id == id }
-    }
-
     var body: some View {
+        let selectedChat: Chat? = selectedChatId.flatMap { id in chatListVM?.chats.first { $0.id == id } }
         NavigationSplitView {
             Group {
                 if let vm = chatListVM {

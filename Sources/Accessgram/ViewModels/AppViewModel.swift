@@ -31,7 +31,7 @@ final class AppViewModel {
         Task { await self.boot() }
     }
 
-    private func boot() async {
+    func boot() async {
         await client.addUpdateHandler { [weak self] update in
             await self?.handleUpdate(update)
         }

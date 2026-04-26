@@ -24,7 +24,6 @@ struct AuthView: View {
             TextField("+1 234 567 8900", text: $phoneNumber)
                 .textFieldStyle(.roundedBorder)
                 .font(.title3)
-                .keyboardType(.phonePad)
                 .focused($fieldFocused)
                 .onSubmit { submit() }
                 .frame(maxWidth: 280)

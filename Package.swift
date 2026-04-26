@@ -18,9 +18,7 @@ let package = Package(
             name: "Accessgram",
             dependencies: ["CTDLib"],
             path: "Sources/Accessgram",
-            swiftSettings: [
-                .enableExperimentalFeature("StrictConcurrency")
-            ]
+            exclude: ["Resources/Info.plist"]
         ),
         .testTarget(
             name: "AccessgramTests",

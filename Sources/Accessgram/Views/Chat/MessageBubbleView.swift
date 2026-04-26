@@ -19,7 +19,7 @@ struct MessageBubbleView: View {
                 if !isOutgoing, !message.senderName.isEmpty {
                     Text(message.senderName)
                         .font(.caption.bold())
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                         .padding(.leading, 4)
                         .accessibilityHidden(true)  // included in bubble label
                 }
@@ -43,7 +43,11 @@ struct MessageBubbleView: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(message.fullAccessibilityLabel)
         .accessibilityAddTraits(.isStaticText)
-        .accessibilityCustomActions(buildActions())
+        .accessibilityAction(named: "Reply") { if message.canBeRepliedTo { onReply() } }
+        .accessibilityAction(named: "Copy text") {
+            if case .text = message.content { onCopy() }
+        }
+        .accessibilityAction(named: "Delete") { if message.canBeDeleted { onDelete() } }
     }
 
     // MARK: - Content
@@ -189,22 +193,6 @@ struct MessageBubbleView: View {
         Button("Delete…", role: .destructive) { onDelete() }
     }
 
-    // MARK: - VoiceOver Custom Actions
-
-    private func buildActions() -> [AccessibilityCustomAction] {
-        var actions: [AccessibilityCustomAction] = []
-
-        if message.canBeRepliedTo {
-            actions.append(AccessibilityCustomAction("Reply") { onReply(); return true })
-        }
-        if case .text = message.content {
-            actions.append(AccessibilityCustomAction("Copy text") { onCopy(); return true })
-        }
-        if message.canBeDeleted {
-            actions.append(AccessibilityCustomAction("Delete") { onDelete(); return true })
-        }
-        return actions
-    }
 }
 
 // MARK: - Bubble Shape
@@ -218,11 +206,13 @@ private struct BubbleShape: Shape {
 
         var path = Path()
         if isOutgoing {
-            path.addRoundedRect(in: rect.inset(by: EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: tailSize)),
-                                cornerSize: CGSize(width: r, height: r))
+            let inset = CGRect(x: rect.minX, y: rect.minY,
+                               width: rect.width - tailSize, height: rect.height)
+            path.addRoundedRect(in: inset, cornerSize: CGSize(width: r, height: r))
         } else {
-            path.addRoundedRect(in: rect.inset(by: EdgeInsets(top: 0, leading: tailSize, bottom: 0, trailing: 0)),
-                                cornerSize: CGSize(width: r, height: r))
+            let inset = CGRect(x: rect.minX + tailSize, y: rect.minY,
+                               width: rect.width - tailSize, height: rect.height)
+            path.addRoundedRect(in: inset, cornerSize: CGSize(width: r, height: r))
         }
         return path
     }

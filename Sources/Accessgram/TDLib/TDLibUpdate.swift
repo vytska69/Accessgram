@@ -12,12 +12,18 @@ enum AuthorizationState: Equatable {
 
     init(type: String) {
         switch type {
-        case "authorizationStateWaitTdlibParameters": self = .waitTdlibParameters
-        case "authorizationStateWaitPhoneNumber":     self = .waitPhoneNumber
-        case "authorizationStateWaitCode":            self = .waitCode
-        case "authorizationStateWaitPassword":        self = .waitPassword
-        case "authorizationStateReady":               self = .ready
-        default:                                      self = .closed
+        case "authorizationStateWaitTdlibParameters":
+            self = .waitTdlibParameters
+        case "authorizationStateWaitPhoneNumber":
+            self = .waitPhoneNumber
+        case "authorizationStateWaitCode":
+            self = .waitCode
+        case "authorizationStateWaitPassword":
+            self = .waitPassword
+        case "authorizationStateReady":
+            self = .ready
+        default:
+            self = .closed
         }
     }
 }
@@ -91,7 +97,8 @@ enum MessageContent {
     // Human-readable description read by VoiceOver
     var accessibilityDescription: String {
         switch self {
-        case .text(let t):                     return t
+        case .text(let t):
+            return t
         case .photo(let cap, let spoiler):
             let base = spoiler ? "Photo with spoiler" : "Photo"
             return cap.isEmpty ? base : "\(base): \(cap)"
@@ -102,33 +109,38 @@ enum MessageContent {
             return who.isEmpty ? "Audio, \(formatDuration(dur))" : "\(who), \(formatDuration(dur))"
         case .document(let name, let cap):
             return "File: \(name)" + (cap.isEmpty ? "" : ": \(cap)")
-        case .sticker(let emoji):              return "\(emoji) sticker"
-        case .voice(let dur):                  return "Voice message, \(formatDuration(dur))"
-        case .videoNote(let dur):              return "Video message, \(formatDuration(dur))"
+        case .sticker(let emoji):
+            return "\(emoji) sticker"
+        case .voice(let dur):
+            return "Voice message, \(formatDuration(dur))"
+        case .videoNote(let dur):
+            return "Video message, \(formatDuration(dur))"
         case .location(let lat, let lon):
             return String(format: "Location: %.4f, %.4f", lat, lon)
         case .contact(let f, let l, let p):
             let name = [f, l].filter { !$0.isEmpty }.joined(separator: " ")
             return "Contact: \(name), \(p)"
-        case .poll(let q):                     return "Poll: \(q)"
-        case .unknown(let t):                  return "Unsupported message (\(t))"
+        case .poll(let q):
+            return "Poll: \(q)"
+        case .unknown(let t):
+            return "Unsupported message (\(t))"
         }
     }
 
     var previewText: String {
         switch self {
-        case .text(let t):     return t
-        case .photo:           return "📷 Photo"
-        case .video:           return "🎥 Video"
-        case .audio:           return "🎵 Audio"
+        case .text(let t):        return t
+        case .photo:              return "📷 Photo"
+        case .video:              return "🎥 Video"
+        case .audio:              return "🎵 Audio"
         case .document(let n, _): return "📎 \(n)"
-        case .sticker(let e): return "\(e) Sticker"
-        case .voice:           return "🎤 Voice message"
-        case .videoNote:       return "⭕ Video message"
-        case .location:        return "📍 Location"
-        case .contact:         return "👤 Contact"
-        case .poll(let q):    return "📊 \(q)"
-        case .unknown:         return "Message"
+        case .sticker(let e):     return "\(e) Sticker"
+        case .voice:              return "🎤 Voice message"
+        case .videoNote:          return "⭕ Video message"
+        case .location:           return "📍 Location"
+        case .contact:            return "👤 Contact"
+        case .poll(let q):        return "📊 \(q)"
+        case .unknown:            return "Message"
         }
     }
 }
@@ -186,16 +198,21 @@ enum UserStatus {
 
     var description: String {
         switch self {
-        case .online:              return "Online"
+        case .online:
+            return "Online"
         case .offline(let d):
             let date = Date(timeIntervalSince1970: TimeInterval(d))
             let f = RelativeDateTimeFormatter()
             f.unitsStyle = .full
             return "Last seen \(f.localizedString(for: date, relativeTo: Date()))"
-        case .recently:            return "Last seen recently"
-        case .lastWeek:            return "Last seen last week"
-        case .lastMonth:           return "Last seen last month"
-        case .unknown:             return ""
+        case .recently:
+            return "Last seen recently"
+        case .lastWeek:
+            return "Last seen last week"
+        case .lastMonth:
+            return "Last seen last month"
+        case .unknown:
+            return ""
         }
     }
 }
@@ -230,12 +247,12 @@ enum TDUpdate {
 
         case "updateMessageContent":
             let chatId = json["chat_id"] as? Int64 ?? 0
-            let msgId  = json["message_id"] as? Int64 ?? 0
+            let msgId = json["message_id"] as? Int64 ?? 0
             self = .messageEdited(chatId: chatId, messageId: msgId)
 
         case "updateDeleteMessages":
             let chatId = json["chat_id"] as? Int64 ?? 0
-            let ids    = json["message_ids"] as? [Int64] ?? []
+            let ids = json["message_ids"] as? [Int64] ?? []
             self = .messagesDeleted(chatId: chatId, ids: ids)
 
         case "updateMessageSendSucceeded":
@@ -248,7 +265,7 @@ enum TDUpdate {
             guard let msgJSON = json["message"] as? [String: Any],
                   let msg = TDMessage(json: msgJSON) else { return nil }
             let oldId = json["old_message_id"] as? Int64 ?? 0
-            let err   = (json["error"] as? [String: Any])?["message"] as? String ?? "Unknown error"
+            let err = (json["error"] as? [String: Any])?["message"] as? String ?? "Unknown error"
             self = .messageSendFailed(chatId: msg.chatId, oldId: oldId, error: err)
 
         case "updateChatLastMessage":
@@ -257,9 +274,9 @@ enum TDUpdate {
             self = .chatLastMessage(chatId: chatId, message: msg)
 
         case "updateChatReadInbox":
-            let chatId  = json["chat_id"] as? Int64 ?? 0
-            let lastId  = json["last_read_inbox_message_id"] as? Int64 ?? 0
-            let unread  = json["unread_count"] as? Int ?? 0
+            let chatId = json["chat_id"] as? Int64 ?? 0
+            let lastId = json["last_read_inbox_message_id"] as? Int64 ?? 0
+            let unread = json["unread_count"] as? Int ?? 0
             self = .chatReadInbox(chatId: chatId, lastReadId: lastId, unreadCount: unread)
 
         case "updateChatPosition":
@@ -271,12 +288,12 @@ enum TDUpdate {
             let statusJSON = json["status"] as? [String: Any] ?? [:]
             let status: UserStatus
             switch statusJSON["@type"] as? String {
-            case "userStatusOnline":       status = .online
-            case "userStatusOffline":      status = .offline(lastSeen: statusJSON["was_online"] as? Int32 ?? 0)
-            case "userStatusRecently":     status = .recently
-            case "userStatusLastWeek":     status = .lastWeek
-            case "userStatusLastMonth":    status = .lastMonth
-            default:                       status = .unknown
+            case "userStatusOnline":    status = .online
+            case "userStatusOffline":   status = .offline(lastSeen: statusJSON["was_online"] as? Int32 ?? 0)
+            case "userStatusRecently":  status = .recently
+            case "userStatusLastWeek":  status = .lastWeek
+            case "userStatusLastMonth": status = .lastMonth
+            default:                    status = .unknown
             }
             self = .userStatus(userId: userId, status: status)
 

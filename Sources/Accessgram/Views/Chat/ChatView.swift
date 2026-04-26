@@ -7,9 +7,9 @@ struct ChatView: View {
     @AccessibilityFocusState private var inputFocused: Bool
 
     init(chat: Chat, client: TDLibClient) {
-        self.chat   = chat
+        self.chat = chat
         self.client = client
-        _viewModel  = State(initialValue: ChatViewModel(chat: chat, client: client))
+        _viewModel = State(initialValue: ChatViewModel(chat: chat, client: client))
     }
 
     var body: some View {
@@ -22,7 +22,7 @@ struct ChatView: View {
                             MessageBubbleView(
                                 message: message,
                                 onReply: { viewModel.startReply(to: message) },
-                                onCopy:  { viewModel.copyText(of: message) },
+                                onCopy: { viewModel.copyText(of: message) },
                                 onDelete: { Task { await viewModel.deleteMessage(message, forAll: false) } }
                             )
                             .id(message.id)

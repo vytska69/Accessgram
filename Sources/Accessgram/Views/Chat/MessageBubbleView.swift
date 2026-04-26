@@ -2,8 +2,8 @@ import SwiftUI
 
 struct MessageBubbleView: View {
     let message: Message
-    let onReply:  () -> Void
-    let onCopy:   () -> Void
+    let onReply: () -> Void
+    let onCopy: () -> Void
     let onDelete: () -> Void
 
     @State private var isHovered = false

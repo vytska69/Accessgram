@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 import Observation
 
 @Observable
@@ -16,7 +16,7 @@ final class ChatViewModel {
     private let client: TDLibClient
 
     init(chat: Chat, client: TDLibClient) {
-        self.chat   = chat
+        self.chat = chat
         self.client = client
     }
 
@@ -27,8 +27,8 @@ final class ChatViewModel {
         defer { isLoading = false }
         do {
             let jsonMsgs = try await client.getChatHistory(chatId: chat.id, limit: 50)
-            let loaded   = jsonMsgs.compactMap { TDMessage(json: $0) }
-                                   .map { Message(tdMessage: $0) }
+            let loaded = jsonMsgs.compactMap { TDMessage(json: $0) }
+                                 .map { Message(tdMessage: $0) }
             messages = loaded.reversed()
 
             let ids = loaded.map { $0.id }

@@ -21,7 +21,7 @@ final class AppViewModel {
     var errorMessage: String?
 
     // Replace these with your values from https://my.telegram.org
-    private let apiId: Int    = 0
+    private let apiId: Int = 0
     private let apiHash: String = ""
 
     let client: TDLibClient
@@ -50,14 +50,19 @@ final class AppViewModel {
 
     private func applyAuthState(_ state: AuthorizationState) {
         switch state {
-        case .waitTdlibParameters: authState = .launching
-        case .waitPhoneNumber:     authState = .waitingForPhone
+        case .waitTdlibParameters:
+            authState = .launching
+        case .waitPhoneNumber:
+            authState = .waitingForPhone
         case .waitCode:
             if case .waitingForCode = authState { break }
             authState = .waitingForCode(phone: "")
-        case .waitPassword:        authState = .waitingForPassword
-        case .ready:               authState = .ready
-        case .closed:              authState = .launching
+        case .waitPassword:
+            authState = .waitingForPassword
+        case .ready:
+            authState = .ready
+        case .closed:
+            authState = .launching
         }
     }
 

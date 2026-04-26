@@ -44,17 +44,17 @@ struct Chat: Identifiable, Hashable {
     }
 
     init?(json: [String: Any]) {
-        guard let id    = json["id"] as? Int64,
+        guard let id = json["id"] as? Int64,
               let title = json["title"] as? String else { return nil }
-        self.id                = id
-        self.title             = title
-        self.type              = ChatType(json: json["type"] as? [String: Any] ?? [:])
-        self.unreadCount       = json["unread_count"] as? Int ?? 0
+        self.id = id
+        self.title = title
+        self.type = ChatType(json: json["type"] as? [String: Any] ?? [:])
+        self.unreadCount = json["unread_count"] as? Int ?? 0
         self.unreadMentionCount = json["unread_mention_count"] as? Int ?? 0
-        self.isMuted           = false
-        self.isPinned          = false
+        self.isMuted = false
+        self.isPinned = false
         if let msgJSON = json["last_message"] as? [String: Any],
-           let tdMsg   = TDMessage(json: msgJSON) {
+           let tdMsg = TDMessage(json: msgJSON) {
             self.lastMessage = Message(tdMessage: tdMsg)
         } else {
             self.lastMessage = nil
@@ -72,13 +72,17 @@ enum ChatType {
 
     init(json: [String: Any]) {
         switch json["@type"] as? String {
-        case "chatTypePrivate":     self = .private(userId: json["user_id"] as? Int64 ?? 0)
-        case "chatTypeBasicGroup":  self = .basicGroup(groupId: json["basic_group_id"] as? Int64 ?? 0)
+        case "chatTypePrivate":
+            self = .private(userId: json["user_id"] as? Int64 ?? 0)
+        case "chatTypeBasicGroup":
+            self = .basicGroup(groupId: json["basic_group_id"] as? Int64 ?? 0)
         case "chatTypeSupergroup":
             self = .supergroup(id: json["supergroup_id"] as? Int64 ?? 0,
                                isChannel: json["is_channel"] as? Bool ?? false)
-        case "chatTypeSecret":      self = .secretChat(id: json["secret_chat_id"] as? Int32 ?? 0)
-        default:                    self = .private(userId: 0)
+        case "chatTypeSecret":
+            self = .secretChat(id: json["secret_chat_id"] as? Int32 ?? 0)
+        default:
+            self = .private(userId: 0)
         }
     }
 
@@ -96,11 +100,11 @@ enum ChatType {
 
     var typeLabel: String {
         switch self {
-        case .private:              return "Private chat"
-        case .basicGroup:           return "Group"
-        case .supergroup(_, true):  return "Channel"
+        case .private:             return "Private chat"
+        case .basicGroup:          return "Group"
+        case .supergroup(_, true): return "Channel"
         case .supergroup(_, false): return "Supergroup"
-        case .secretChat:           return "Secret chat"
+        case .secretChat:          return "Secret chat"
         }
     }
 }

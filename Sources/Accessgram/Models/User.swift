@@ -19,13 +19,13 @@ struct User: Identifiable {
 
     init?(json: [String: Any]) {
         guard let id = json["id"] as? Int64 else { return nil }
-        self.id        = id
+        self.id = id
         self.firstName = json["first_name"] as? String ?? ""
-        self.lastName  = json["last_name"] as? String ?? ""
-        self.username  = (json["usernames"] as? [String: Any])?["editable_username"] as? String
-        self.phone     = json["phone_number"] as? String ?? ""
+        self.lastName = json["last_name"] as? String ?? ""
+        self.username = (json["usernames"] as? [String: Any])?["editable_username"] as? String
+        self.phone = json["phone_number"] as? String ?? ""
         self.isContact = json["is_contact"] as? Bool ?? false
-        self.isBot     = (json["type"] as? [String: Any])?["@type"] as? String == "userTypeBot"
-        self.status    = .unknown
+        self.isBot = (json["type"] as? [String: Any])?["@type"] as? String == "userTypeBot"
+        self.status = .unknown
     }
 }

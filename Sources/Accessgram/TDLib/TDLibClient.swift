@@ -63,7 +63,7 @@ actor TDLibClient {
            let continuation = pendingRequests.removeValue(forKey: extra) {
             if (obj["@type"] as? String) == "error" {
                 let code = obj["code"] as? Int ?? 0
-                let msg  = obj["message"] as? String ?? "Unknown TDLib error"
+                let msg = obj["message"] as? String ?? "Unknown TDLib error"
                 continuation.resume(throwing: TDError.api(code: code, message: msg))
             } else {
                 continuation.resume(returning: obj)
@@ -88,23 +88,23 @@ actor TDLibClient {
     /// Call once after creating the client.
     func setParameters(apiId: Int, apiHash: String) async {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let base    = support.appendingPathComponent("Accessgram")
-        let dbPath  = base.appendingPathComponent("td_db").path
-        let files   = base.appendingPathComponent("files").path
+        let base = support.appendingPathComponent("Accessgram")
+        let dbPath = base.appendingPathComponent("td_db").path
+        let files = base.appendingPathComponent("files").path
 
         try? FileManager.default.createDirectory(atPath: dbPath, withIntermediateDirectories: true)
         try? FileManager.default.createDirectory(atPath: files, withIntermediateDirectories: true)
 
         _ = try? await sendRaw("setTdlibParameters", params: [
             "use_message_database": true,
-            "use_secret_chats":     false,
-            "api_id":               apiId,
-            "api_hash":             apiHash,
+            "use_secret_chats": false,
+            "api_id": apiId,
+            "api_hash": apiHash,
             "system_language_code": Locale.current.language.languageCode?.identifier ?? "en",
-            "device_model":         "Mac",
-            "application_version":  Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
-            "database_directory":   dbPath,
-            "files_directory":      files
+            "device_model": "Mac",
+            "application_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
+            "database_directory": dbPath,
+            "files_directory": files
         ])
     }
 
@@ -114,11 +114,11 @@ actor TDLibClient {
         _ = try await sendRaw("setAuthenticationPhoneNumber", params: [
             "phone_number": phone,
             "settings": [
-                "@type":                      "phoneNumberAuthenticationSettings",
-                "allow_flash_call":           false,
-                "allow_missed_call":          false,
-                "is_current_phone_number":    false,
-                "allow_sms_retriever_api":    false
+                "@type": "phoneNumberAuthenticationSettings",
+                "allow_flash_call": false,
+                "allow_missed_call": false,
+                "is_current_phone_number": false,
+                "allow_sms_retriever_api": false
             ]
         ])
     }
@@ -140,7 +140,7 @@ actor TDLibClient {
     func loadChatList(limit: Int = 20) async throws {
         _ = try await sendRaw("loadChats", params: [
             "chat_list": ["@type": "chatListMain"],
-            "limit":     limit
+            "limit": limit
         ])
     }
 
@@ -150,11 +150,11 @@ actor TDLibClient {
 
     func getChatHistory(chatId: Int64, fromId: Int64 = 0, limit: Int = 50) async throws -> [[String: Any]] {
         let resp = try await sendRaw("getChatHistory", params: [
-            "chat_id":         chatId,
+            "chat_id": chatId,
             "from_message_id": fromId,
-            "offset":          0,
-            "limit":           limit,
-            "only_local":      false
+            "offset": 0,
+            "limit": limit,
+            "only_local": false
         ])
         return resp["messages"] as? [[String: Any]] ?? []
     }
@@ -165,8 +165,8 @@ actor TDLibClient {
             "input_message_content": [
                 "@type": "inputMessageText",
                 "text": [
-                    "@type":    "formattedText",
-                    "text":     text,
+                    "@type": "formattedText",
+                    "text": text,
                     "entities": []
                 ],
                 "clear_draft": true
@@ -180,17 +180,17 @@ actor TDLibClient {
 
     func viewMessages(chatId: Int64, ids: [Int64]) async {
         _ = try? await sendRaw("viewMessages", params: [
-            "chat_id":     chatId,
+            "chat_id": chatId,
             "message_ids": ids,
-            "force_read":  true
+            "force_read": true
         ])
     }
 
     func deleteMessage(chatId: Int64, messageId: Int64, forAll: Bool) async throws {
         _ = try await sendRaw("deleteMessages", params: [
-            "chat_id":     chatId,
+            "chat_id": chatId,
             "message_ids": [messageId],
-            "revoke":      forAll
+            "revoke": forAll
         ])
     }
 

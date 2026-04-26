@@ -46,17 +46,17 @@ struct Message: Identifiable, Hashable {
     // MARK: - Init from TDMessage
 
     init(tdMessage: TDMessage, senderName: String = "") {
-        self.id           = tdMessage.id
-        self.chatId       = tdMessage.chatId
-        self.sender       = tdMessage.sender
-        self.senderName   = senderName
-        self.content      = tdMessage.content
-        self.date         = Date(timeIntervalSince1970: TimeInterval(tdMessage.date))
-        self.isOutgoing   = tdMessage.isOutgoing
-        self.isRead       = false
-        self.canBeRepliedTo  = true
-        self.canBeForwarded  = tdMessage.canBeForwarded
-        self.canBeDeleted    = tdMessage.canBeDeletedForAll
-        self.editDate     = nil
+        self.id = tdMessage.id
+        self.chatId = tdMessage.chatId
+        self.sender = tdMessage.sender
+        self.senderName = senderName
+        self.content = tdMessage.content
+        self.date = Date(timeIntervalSince1970: TimeInterval(tdMessage.date))
+        self.isOutgoing = tdMessage.isOutgoing
+        self.isRead = false
+        self.canBeRepliedTo = true
+        self.canBeForwarded = tdMessage.canBeForwarded
+        self.canBeDeleted = tdMessage.canBeDeletedForAll
+        self.editDate = nil
     }
 }

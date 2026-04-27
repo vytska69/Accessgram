@@ -90,21 +90,24 @@ actor TDLibClient {
         let filesPath = base.appendingPathComponent("files").path
         try FileManager.default.createDirectory(atPath: dbPath, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(atPath: filesPath, withIntermediateDirectories: true)
+        let osVer = ProcessInfo.processInfo.operatingSystemVersion
+        let sysVersion = "\(osVer.majorVersion).\(osVer.minorVersion).\(osVer.patchVersion)"
+        let langCode = Locale.current.language.languageCode?.identifier ?? "en"
+        let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         _ = try await sendRaw("setTdlibParameters", params: [
             "use_test_dc": useTestDc,
             "database_directory": dbPath,
             "files_directory": filesPath,
-            "database_encryption_key": "",
             "use_file_database": true,
             "use_chat_info_database": true,
             "use_message_database": true,
             "use_secret_chats": false,
-            "api_id": apiId,
+            "api_id": Int32(apiId),
             "api_hash": apiHash,
-            "system_language_code": Locale.current.language.languageCode?.identifier ?? "en",
+            "system_language_code": langCode,
             "device_model": "Mac",
-            "system_version": ProcessInfo.processInfo.operatingSystemVersionString,
-            "application_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+            "system_version": sysVersion,
+            "application_version": appVersion
         ])
     }
 }

@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct ChatListView: View {
     let viewModel: ChatListViewModel
     @Binding var selectedChatId: Int64?

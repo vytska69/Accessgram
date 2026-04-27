@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 struct ChatView: View {
     let chat: Chat
     let client: TDLibClient

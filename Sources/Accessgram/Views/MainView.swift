@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct MainView: View {
     @Environment(AppViewModel.self) private var app
     @State private var selectedChatId: Int64?

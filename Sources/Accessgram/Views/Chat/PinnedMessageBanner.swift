@@ -39,7 +39,7 @@ struct PinnedMessageBanner: View {
         .onTapGesture(perform: onTap)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Pinned: \(message.content.previewText). Tap to jump.")
-        .accessibilityAction(named: "Jump to message", perform: onTap)
-        .accessibilityAction(named: "Dismiss", perform: onDismiss)
+        .accessibilityAction(named: "Jump to message") { onTap() }
+        .accessibilityAction(named: "Dismiss") { onDismiss() }
     }
 }

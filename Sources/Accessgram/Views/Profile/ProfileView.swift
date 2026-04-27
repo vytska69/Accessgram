@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct ProfileView: View {
     let chat: Chat
     @Environment(AppViewModel.self) private var app

@@ -2,6 +2,7 @@ import AppKit
 import AVFoundation
 import SwiftUI
 
+@MainActor
 struct MessageBubbleView: View {
     let message: Message
     let viewModel: ChatViewModel

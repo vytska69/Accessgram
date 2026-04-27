@@ -86,9 +86,9 @@ actor TDLibClient {
     // MARK: - TDLib Setup
 
     /// Call once after creating the client.
-    func setParameters(apiId: Int, apiHash: String) async {
+    func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) async {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let base = support.appendingPathComponent("Accessgram")
+        let base = support.appendingPathComponent(useTestDc ? "Accessgram-test" : "Accessgram")
         let dbPath = base.appendingPathComponent("td_db").path
         let files = base.appendingPathComponent("files").path
 
@@ -96,6 +96,7 @@ actor TDLibClient {
         try? FileManager.default.createDirectory(atPath: files, withIntermediateDirectories: true)
 
         _ = try? await sendRaw("setTdlibParameters", params: [
+            "use_test_dc": useTestDc,
             "use_message_database": true,
             "use_secret_chats": false,
             "api_id": apiId,

@@ -17,7 +17,7 @@ struct AuthView: View {
                 .font(.title.bold())
                 .accessibilityAddTraits(.isHeader)
 
-            Text("Enter your phone number with country code.")
+            Text("Test mode: use +9996611111 (DC 1), +9996621111 (DC 2), or +9996631111 (DC 3).")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 

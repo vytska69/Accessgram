@@ -23,7 +23,7 @@ struct CodeEntryView: View {
                 .multilineTextAlignment(.center)
                 .accessibilityLabel("Verification code sent to \(phoneNumber)")
 
-            TextField("12345", text: $code)
+            TextField("11111", text: $code)
                 .textFieldStyle(.roundedBorder)
                 .font(.largeTitle.monospacedDigit())
                 .multilineTextAlignment(.center)
@@ -31,7 +31,7 @@ struct CodeEntryView: View {
                 .onSubmit { submit() }
                 .frame(maxWidth: 200)
                 .accessibilityLabel("Verification code")
-                .accessibilityHint("Enter the 5-digit code sent to your phone")
+                .accessibilityHint("Test mode: code is your DC number repeated, e.g. 11111 for DC 1")
                 .accessibilityValue(code.isEmpty ? "empty" : code.map { String($0) }.joined(separator: " "))
 
             Button(action: submit) {

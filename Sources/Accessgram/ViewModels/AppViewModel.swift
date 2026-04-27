@@ -20,9 +20,10 @@ final class AppViewModel {
     var authState: AuthState = .launching
     var errorMessage: String?
 
-    // Replace these with your values from https://my.telegram.org
-    private let apiId: Int = 0
-    private let apiHash: String = ""
+    // Telegram Desktop's public test credentials — connects to test DC only.
+    // Never use these on production servers.
+    private let apiId: Int = 17349
+    private let apiHash: String = "344583e45741c457fe1862106095a5eb"
 
     let client: TDLibClient
 
@@ -36,7 +37,7 @@ final class AppViewModel {
             await self?.handleUpdate(update)
         }
         await client.start()
-        await client.setParameters(apiId: apiId, apiHash: apiHash)
+        await client.setParameters(apiId: apiId, apiHash: apiHash, useTestDc: true)
     }
 
     private func handleUpdate(_ update: TDUpdate) async {

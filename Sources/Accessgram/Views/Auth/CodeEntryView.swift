@@ -31,7 +31,7 @@ struct CodeEntryView: View {
                 .onSubmit { submit() }
                 .frame(maxWidth: 200)
                 .accessibilityLabel("Verification code")
-                .accessibilityHint("Test mode: code is your DC number repeated, e.g. 11111 for DC 1")
+                .accessibilityHint("Enter the verification code sent to your phone")
                 .accessibilityValue(code.isEmpty ? "empty" : code.map { String($0) }.joined(separator: " "))
 
             Button(action: submit) {

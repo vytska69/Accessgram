@@ -5,6 +5,7 @@ import Observation
 
 enum AuthState: Equatable {
     case launching
+    case needsCredentials
     case waitingForPhone
     case waitingForCode(phone: String)
     case waitingForPassword
@@ -20,11 +21,7 @@ final class AppViewModel {
     var authState: AuthState = .launching
     var errorMessage: String?
 
-    // Telegram Desktop's public test credentials — connects to test DC only.
-    // Never use these on production servers.
-    private let apiId: Int = 17349
-    private let apiHash: String = "344583e45741c457fe1862106095a5eb"
-
+    private var hasSetupHandlers = false
     let client: TDLibClient
 
     init() {
@@ -33,11 +30,27 @@ final class AppViewModel {
     }
 
     func boot() async {
-        await client.addUpdateHandler { [weak self] update in
-            await self?.handleUpdate(update)
+        let storedId = UserDefaults.standard.integer(forKey: "apiId")
+        let storedHash = UserDefaults.standard.string(forKey: "apiHash") ?? ""
+        guard storedId != 0, !storedHash.isEmpty else {
+            authState = .needsCredentials
+            return
         }
-        await client.start()
-        await client.setParameters(apiId: apiId, apiHash: apiHash, useTestDc: true)
+        if !hasSetupHandlers {
+            await client.addUpdateHandler { [weak self] update in
+                await self?.handleUpdate(update)
+            }
+            await client.start()
+            hasSetupHandlers = true
+        }
+        await client.setParameters(apiId: storedId, apiHash: storedHash)
+    }
+
+    func saveCredentials(apiId: Int, apiHash: String) async {
+        UserDefaults.standard.set(apiId, forKey: "apiId")
+        UserDefaults.standard.set(apiHash, forKey: "apiHash")
+        authState = .launching
+        await boot()
     }
 
     private func handleUpdate(_ update: TDUpdate) async {

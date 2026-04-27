@@ -13,6 +13,8 @@ actor TDLibClient {
 
     init() {
         clientId = td_create_client_id()
+        // Suppress TDLib internal logs (fatal errors only)
+        _ = td_execute("{\"@type\":\"setLogVerbosityLevel\",\"new_verbosity_level\":0}")
     }
 
     deinit {
@@ -22,6 +24,7 @@ actor TDLibClient {
     // MARK: - Lifecycle
 
     func start() {
+        guard receiveTask == nil else { return }
         receiveTask = Task.detached(priority: .userInitiated) { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
@@ -80,24 +83,28 @@ actor TDLibClient {
 
     // MARK: - Setup
 
-    func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) async {
+    func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) async throws {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let base = support.appendingPathComponent(useTestDc ? "Accessgram-test" : "Accessgram")
         let dbPath = base.appendingPathComponent("td_db").path
-        let files = base.appendingPathComponent("files").path
-        try? FileManager.default.createDirectory(atPath: dbPath, withIntermediateDirectories: true)
-        try? FileManager.default.createDirectory(atPath: files, withIntermediateDirectories: true)
-        _ = try? await sendRaw("setTdlibParameters", params: [
+        let filesPath = base.appendingPathComponent("files").path
+        try FileManager.default.createDirectory(atPath: dbPath, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: filesPath, withIntermediateDirectories: true)
+        _ = try await sendRaw("setTdlibParameters", params: [
             "use_test_dc": useTestDc,
+            "database_directory": dbPath,
+            "files_directory": filesPath,
+            "database_encryption_key": "",
+            "use_file_database": true,
+            "use_chat_info_database": true,
             "use_message_database": true,
             "use_secret_chats": false,
             "api_id": apiId,
             "api_hash": apiHash,
             "system_language_code": Locale.current.language.languageCode?.identifier ?? "en",
             "device_model": "Mac",
-            "application_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0",
-            "database_directory": dbPath,
-            "files_directory": files
+            "system_version": ProcessInfo.processInfo.operatingSystemVersionString,
+            "application_version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
         ])
     }
 }

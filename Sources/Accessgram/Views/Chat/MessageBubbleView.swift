@@ -44,9 +44,7 @@ struct MessageBubbleView: View {
         .accessibilityLabel(message.fullAccessibilityLabel)
         .accessibilityAddTraits(.isStaticText)
         .accessibilityAction(named: "Reply") { if message.canBeRepliedTo { onReply() } }
-        .accessibilityAction(named: "Copy text") {
-            if case .text = message.content { onCopy() }
-        }
+        .accessibilityAction(named: "Copy text") { if case .text = message.content { onCopy() } }
         .accessibilityAction(named: "Delete") { if message.canBeDeleted { onDelete() } }
     }
 
@@ -206,12 +204,10 @@ private struct BubbleShape: Shape {
 
         var path = Path()
         if isOutgoing {
-            let inset = CGRect(x: rect.minX, y: rect.minY,
-                               width: rect.width - tailSize, height: rect.height)
+            let inset = CGRect(x: rect.minX, y: rect.minY, width: rect.width - tailSize, height: rect.height)
             path.addRoundedRect(in: inset, cornerSize: CGSize(width: r, height: r))
         } else {
-            let inset = CGRect(x: rect.minX + tailSize, y: rect.minY,
-                               width: rect.width - tailSize, height: rect.height)
+            let inset = CGRect(x: rect.minX + tailSize, y: rect.minY, width: rect.width - tailSize, height: rect.height)
             path.addRoundedRect(in: inset, cornerSize: CGSize(width: r, height: r))
         }
         return path

@@ -70,4 +70,3 @@ private struct ErrorView: View {
         .accessibilityLabel("Connection error: \(message). Button: Try Again.")
     }
 }
-

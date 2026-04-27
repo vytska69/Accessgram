@@ -31,7 +31,7 @@ jobs:
           restore-keys: homebrew-tdlib-${{ runner.os }}-
 
       - name: Install TDLib
-        run: brew install tdlib
+        run: brew install tdlib && brew link --overwrite tdlib
 
       - name: Export pkg-config path
         run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"
@@ -112,7 +112,7 @@ jobs:
           restore-keys: homebrew-tdlib-${{ runner.os }}-
 
       - name: Install TDLib
-        run: brew install tdlib
+        run: brew install tdlib && brew link --overwrite tdlib
 
       - name: Export pkg-config path
         run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"

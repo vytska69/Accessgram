@@ -5,11 +5,11 @@ set -euo pipefail
 
 BINARY="${1:-.build/release/Accessgram}"
 BUILD_NUMBER="${2:-0}"
-TDLIB_DIR="$(brew --prefix)/lib"
 APP="Accessgram.app"
 MACOS="$APP/Contents/MacOS"
 FRAMEWORKS="$APP/Contents/Frameworks"
 RESOURCES="$APP/Contents/Resources"
+BREW_PREFIX="$(brew --prefix)"
 
 echo "▶ Assembling $APP (build $BUILD_NUMBER)"
 rm -rf "$APP"
@@ -25,77 +25,117 @@ cp "Sources/Accessgram/Resources/Info.plist" "$APP/Contents/Info.plist"
     -c "Set :CFBundleVersion $BUILD_NUMBER" \
     "$APP/Contents/Info.plist"
 
+# ── Pure-bash symlink resolver (no python3 / GNU coreutils required) ─────────
+resolve_path() {
+    local path="$1"
+    local count=0
+    while [ -L "$path" ] && [ "$count" -lt 20 ]; do
+        local target
+        target=$(readlink "$path")
+        if [[ "$target" == /* ]]; then
+            path="$target"
+        else
+            path="$(dirname "$path")/$target"
+        fi
+        count=$((count + 1))
+    done
+    echo "$path"
+}
+
 # ── Recursive dylib embedder ─────────────────────────────────────────────────
-# Copies a Homebrew dylib + all its Homebrew transitive deps into Frameworks/,
-# then rewrites every /opt/homebrew/… reference to @executable_path/../Frameworks/…
 embed_dylib() {
     local src="$1"
     local name
     name=$(basename "$src")
     local dest="$FRAMEWORKS/$name"
 
-    # Already embedded – nothing to do.
-    [ -f "$dest" ] && return 0
+    [ -f "$dest" ] && return 0   # already embedded
 
-    # Resolve symlink to get the real file on disk.
-    local real_src
-    real_src=$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$src" 2>/dev/null || echo "$src")
-    if [ ! -f "$real_src" ]; then
-        echo "  ⚠️  Cannot find: $src – skipping"
+    local real
+    real=$(resolve_path "$src")
+    if [ ! -f "$real" ]; then
+        echo "  ⚠️  Cannot find $src → skipping" >&2
         return 0
     fi
 
-    echo "  Embedding: $name"
-    cp "$real_src" "$dest"
+    echo "  Embedding: $name (from $real)"
+    cp "$real" "$dest"
     chmod 755 "$dest"
-
-    # Reset the dylib's own id to its embedded location.
     install_name_tool -id "@executable_path/../Frameworks/$name" "$dest"
 
-    # Walk all dependencies reported by otool; embed and relink Homebrew ones.
+    # Recurse into Homebrew dependencies and relink them.
     while IFS= read -r dep; do
-        [[ "$dep" == /opt/homebrew/* ]] || continue
-        local dep_name
-        dep_name=$(basename "$dep")
-
-        # Recurse first so the dep is present before we rewrite our reference.
+        [[ "$dep" == "$BREW_PREFIX"/* ]] || continue
+        local dn
+        dn=$(basename "$dep")
         embed_dylib "$dep"
-
         install_name_tool \
-            -change "$dep" \
-            "@executable_path/../Frameworks/$dep_name" \
+            -change "$dep" "@executable_path/../Frameworks/$dn" \
             "$dest" 2>/dev/null || true
     done < <(otool -L "$dest" 2>/dev/null | awk 'NR>1 {print $1}')
 }
 
-# ── Embed TDLib and its transitive Homebrew dependencies ─────────────────────
-TDLIB_SRC=$(find "$TDLIB_DIR" -name "libtdjson.*.dylib" 2>/dev/null | sort -V | tail -1)
-[ -z "$TDLIB_SRC" ] && TDLIB_SRC="$TDLIB_DIR/libtdjson.dylib"
+# ── Locate libtdjson.dylib ───────────────────────────────────────────────────
+# Try the three standard Homebrew locations in order of preference.
+TDLIB_SRC=""
+for candidate in \
+    "$BREW_PREFIX/lib/libtdjson.dylib" \
+    "$BREW_PREFIX/opt/tdlib/lib/libtdjson.dylib" \
+    "$(brew --cellar tdlib 2>/dev/null || true)"; do
+    if [ -f "$candidate" ] || [ -L "$candidate" ]; then
+        TDLIB_SRC="$candidate"
+        break
+    fi
+    # If the candidate is the Cellar directory, search inside it.
+    if [ -d "$candidate" ]; then
+        found=$(find "$candidate" -name "libtdjson.dylib" -maxdepth 4 2>/dev/null \
+                | sort -V | tail -1)
+        if [ -n "$found" ]; then
+            TDLIB_SRC="$found"
+            break
+        fi
+    fi
+done
+
+if [ -z "$TDLIB_SRC" ]; then
+    echo "❌ Cannot find libtdjson.dylib under $BREW_PREFIX" >&2
+    echo "   Make sure 'brew install tdlib && brew link --overwrite tdlib' ran." >&2
+    exit 1
+fi
+
 echo "  Embedding TDLib: $TDLIB_SRC"
 embed_dylib "$TDLIB_SRC"
+
+# Verify the main dylib was actually embedded.
+if [ ! -f "$FRAMEWORKS/libtdjson.dylib" ]; then
+    echo "❌ libtdjson.dylib was not copied to Frameworks – aborting." >&2
+    exit 1
+fi
 
 # ── Fix the main binary's reference to libtdjson ─────────────────────────────
 ORIGINAL=$(otool -L "$MACOS/Accessgram" | awk '/tdjson/ {print $1}' | head -1)
 if [ -n "$ORIGINAL" ]; then
-    echo "  Fixing rpath: $ORIGINAL → @executable_path/../Frameworks/libtdjson.dylib"
+    echo "  Relinking binary: $ORIGINAL → @executable_path/../Frameworks/libtdjson.dylib"
     install_name_tool \
         -change "$ORIGINAL" \
         "@executable_path/../Frameworks/libtdjson.dylib" \
         "$MACOS/Accessgram"
 fi
 
-# ── Second pass: relink any remaining /opt/homebrew paths in all embedded dylibs
-# (handles cross-dependencies between libssl ↔ libcrypto etc.)
+# ── Second pass: fix any remaining Homebrew paths in all embedded dylibs ─────
 for dylib in "$FRAMEWORKS"/*.dylib; do
     while IFS= read -r dep; do
-        [[ "$dep" == /opt/homebrew/* ]] || continue
-        dep_name=$(basename "$dep")
+        [[ "$dep" == "$BREW_PREFIX"/* ]] || continue
         install_name_tool \
             -change "$dep" \
-            "@executable_path/../Frameworks/$dep_name" \
+            "@executable_path/../Frameworks/$(basename "$dep")" \
             "$dylib" 2>/dev/null || true
     done < <(otool -L "$dylib" 2>/dev/null | awk 'NR>1 {print $1}')
 done
+
+# ── List what we embedded ─────────────────────────────────────────────────────
+echo "  Embedded libraries:"
+for f in "$FRAMEWORKS"/*.dylib; do echo "    $(basename "$f")"; done
 
 # ── Ad-hoc codesign ──────────────────────────────────────────────────────────
 echo "  Signing (ad-hoc)"

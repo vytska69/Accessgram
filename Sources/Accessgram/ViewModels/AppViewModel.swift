@@ -19,6 +19,7 @@ enum AuthState: Equatable {
 final class AppViewModel {
     var authState: AuthState = .launching
     var errorMessage: String?
+    var chatListViewModel: ChatListViewModel?
 
     private let apiId: Int = 23618133
     private let apiHash: String = "421fd1c66ea61e98d93734fe729f6181"

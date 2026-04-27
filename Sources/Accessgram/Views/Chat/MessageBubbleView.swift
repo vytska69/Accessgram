@@ -1,12 +1,18 @@
+import AppKit
+import AVFoundation
 import SwiftUI
 
 struct MessageBubbleView: View {
     let message: Message
+    let viewModel: ChatViewModel
     let onReply: () -> Void
-    let onCopy: () -> Void
+    let onEdit: () -> Void
+    let onForward: () -> Void
     let onDelete: () -> Void
 
-    @State private var isHovered = false
+    @State private var photoPath: String?
+    @State private var audioPlayer: AVAudioPlayer?
+    @State private var isPlayingAudio = false
 
     private var isOutgoing: Bool { message.isOutgoing }
 
@@ -15,18 +21,25 @@ struct MessageBubbleView: View {
             if isOutgoing { Spacer(minLength: 60) }
 
             VStack(alignment: isOutgoing ? .trailing : .leading, spacing: 4) {
-                // Sender name (groups only, incoming only)
                 if !isOutgoing, !message.senderName.isEmpty {
                     Text(message.senderName)
                         .font(.caption.bold())
                         .foregroundStyle(Color.accentColor)
                         .padding(.leading, 4)
-                        .accessibilityHidden(true)  // included in bubble label
+                        .accessibilityHidden(true)
                 }
 
-                // Bubble
                 VStack(alignment: .leading, spacing: 4) {
+                    if let fwd = message.forwardOriginName {
+                        forwardHeader(from: fwd)
+                    }
+                    if let quoteText = message.replyQuoteText {
+                        replyQuote(text: quoteText)
+                    }
                     contentView
+                    if !message.reactions.isEmpty {
+                        reactionsRow
+                    }
                     timeRow
                 }
                 .padding(.horizontal, 12)
@@ -39,13 +52,72 @@ struct MessageBubbleView: View {
             if !isOutgoing { Spacer(minLength: 60) }
         }
         .padding(.vertical, 2)
-        // --- VoiceOver ---
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(message.fullAccessibilityLabel)
         .accessibilityAddTraits(.isStaticText)
-        .accessibilityAction(named: "Reply") { if message.canBeRepliedTo { onReply() } }
-        .accessibilityAction(named: "Copy text") { if case .text = message.content { onCopy() } }
+        .accessibilityAction(named: "Reply") { onReply() }
+        .accessibilityAction(named: "Edit") { if message.isOutgoing { onEdit() } }
+        .accessibilityAction(named: "Forward") { if message.canBeForwarded { onForward() } }
         .accessibilityAction(named: "Delete") { if message.canBeDeleted { onDelete() } }
+    }
+
+    // MARK: - Forward Header
+
+    private func forwardHeader(from name: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: "arrowshape.turn.up.right.fill")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text("Forwarded from \(name)")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .italic()
+        }
+    }
+
+    // MARK: - Reply Quote
+
+    private func replyQuote(text: String) -> some View {
+        HStack(spacing: 6) {
+            Rectangle()
+                .fill(Color.accentColor)
+                .frame(width: 2)
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+        }
+        .padding(.vertical, 2)
+    }
+
+    // MARK: - Reactions
+
+    private var reactionsRow: some View {
+        HStack(spacing: 4) {
+            ForEach(message.reactions, id: \.emoji) { reaction in
+                Button {
+                    Task {
+                        if reaction.isChosen {
+                            await viewModel.removeReaction(emoji: reaction.emoji, from: message)
+                        } else {
+                            await viewModel.addReaction(emoji: reaction.emoji, to: message)
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 2) {
+                        Text(reaction.emoji).font(.caption)
+                        Text("\(reaction.count)").font(.caption2)
+                    }
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(reaction.isChosen ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.1))
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("\(reaction.emoji) \(reaction.count)")
+                .accessibilityHint(reaction.isChosen ? "Tap to remove reaction" : "Tap to add reaction")
+            }
+        }
     }
 
     // MARK: - Content
@@ -54,77 +126,34 @@ struct MessageBubbleView: View {
     private var contentView: some View {
         switch message.content {
         case .text(let t):
-            Text(t)
-                .font(.body)
-                .textSelection(.enabled)
+            Text(t).font(.body).textSelection(.enabled)
 
-        case .photo(let caption, let hasSpoiler):
+        case .photo(let caption, let hasSpoiler, let file):
+            photoView(file: file, caption: caption, hasSpoiler: hasSpoiler)
+
+        case .video(let caption, let duration, _):
             VStack(alignment: .leading, spacing: 4) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.secondary.opacity(0.2))
-                        .aspectRatio(4 / 3, contentMode: .fit)
-                        .frame(maxWidth: 240)
-                    Image(systemName: "photo")
-                        .font(.largeTitle)
-                        .foregroundStyle(.secondary)
-                    if hasSpoiler {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(.ultraThinMaterial)
-                        Text("Tap to reveal")
-                            .font(.caption)
-                    }
-                }
-                if !caption.isEmpty {
-                    Text(caption).font(.body)
-                }
-            }
-
-        case .video(let caption, let duration):
-            VStack(alignment: .leading, spacing: 4) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.secondary.opacity(0.2))
+                    RoundedRectangle(cornerRadius: 8).fill(Color.secondary.opacity(0.2))
                         .frame(width: 240, height: 160)
-                    Image(systemName: "play.circle.fill")
-                        .font(.system(size: 44))
-                        .foregroundStyle(.white)
-                    Text(formatDuration(duration))
-                        .font(.caption.monospacedDigit())
-                        .padding(4)
-                        .background(.black.opacity(0.6))
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                        .foregroundStyle(.white)
+                    Image(systemName: "play.circle.fill").font(.system(size: 44)).foregroundStyle(.white)
+                    Text(tdFormatDuration(duration)).font(.caption.monospacedDigit())
+                        .padding(4).background(.black.opacity(0.6))
+                        .clipShape(RoundedRectangle(cornerRadius: 4)).foregroundStyle(.white)
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                         .padding(6)
                 }
                 if !caption.isEmpty { Text(caption).font(.body) }
             }
 
-        case .voice(let duration):
-            Label("\(formatDuration(duration))", systemImage: "waveform")
-                .font(.body)
+        case .voice(let duration, let file):
+            voiceView(file: file, duration: duration)
 
-        case .audio(let title, let performer, let duration):
-            HStack(spacing: 10) {
-                Image(systemName: "music.note")
-                    .font(.title2)
-                VStack(alignment: .leading) {
-                    if !title.isEmpty { Text(title).font(.headline).lineLimit(1) }
-                    if !performer.isEmpty { Text(performer).font(.caption).foregroundStyle(.secondary) }
-                    Text(formatDuration(duration)).font(.caption.monospacedDigit())
-                }
-            }
+        case .audio(let title, let performer, let duration, let file):
+            audioView(title: title, performer: performer, duration: duration, file: file)
 
-        case .document(let name, let caption):
-            HStack(spacing: 10) {
-                Image(systemName: "doc.fill")
-                    .font(.title2)
-                VStack(alignment: .leading) {
-                    Text(name).font(.headline).lineLimit(1)
-                    if !caption.isEmpty { Text(caption).font(.caption) }
-                }
-            }
+        case .document(let name, let caption, _, let file):
+            documentView(name: name, caption: caption, file: file)
 
         case .sticker(let emoji):
             Text(emoji).font(.system(size: 48))
@@ -134,8 +163,7 @@ struct MessageBubbleView: View {
 
         case .contact(let first, let last, let phone):
             HStack(spacing: 10) {
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.title2)
+                Image(systemName: "person.crop.circle.fill").font(.title2)
                 VStack(alignment: .leading) {
                     Text("\(first) \(last)").font(.headline)
                     Text(phone).font(.caption).foregroundStyle(.secondary)
@@ -153,14 +181,146 @@ struct MessageBubbleView: View {
         }
     }
 
+    // MARK: - Photo
+
+    @ViewBuilder
+    private func photoView(file: TDFile?, caption: String, hasSpoiler: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            let path = photoPath ?? file?.localPath
+            if let path, let img = NSImage(contentsOfFile: path) {
+                Image(nsImage: img)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(maxWidth: 240)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8).fill(Color.secondary.opacity(0.2))
+                        .frame(maxWidth: 240).aspectRatio(4 / 3, contentMode: .fit)
+                    Image(systemName: hasSpoiler ? "eye.slash" : "photo")
+                        .font(.largeTitle).foregroundStyle(.secondary)
+                    if file != nil {
+                        ProgressView().scaleEffect(0.6).offset(y: 20)
+                    }
+                }
+                .task {
+                    guard let file else { return }
+                    await viewModel.downloadFile(file)
+                    photoPath = viewModel.localPath(for: file)
+                }
+            }
+            if !caption.isEmpty { Text(caption).font(.body) }
+        }
+    }
+
+    // MARK: - Voice
+
+    @ViewBuilder
+    private func voiceView(file: TDFile?, duration: Int) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                Task { await toggleAudio(file: file) }
+            } label: {
+                Image(systemName: isPlayingAudio ? "pause.circle.fill" : "play.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isPlayingAudio ? "Pause voice message" : "Play voice message")
+            Label(tdFormatDuration(duration), systemImage: "waveform").font(.body)
+        }
+    }
+
+    // MARK: - Audio
+
+    @ViewBuilder
+    private func audioView(title: String, performer: String, duration: Int, file: TDFile?) -> some View {
+        HStack(spacing: 10) {
+            Button {
+                Task { await toggleAudio(file: file) }
+            } label: {
+                Image(systemName: isPlayingAudio ? "pause.circle.fill" : "play.circle.fill")
+                    .font(.title2).foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(isPlayingAudio ? "Pause" : "Play audio")
+            VStack(alignment: .leading) {
+                if !title.isEmpty { Text(title).font(.headline).lineLimit(1) }
+                if !performer.isEmpty { Text(performer).font(.caption).foregroundStyle(.secondary) }
+                Text(tdFormatDuration(duration)).font(.caption.monospacedDigit())
+            }
+        }
+    }
+
+    // MARK: - Document
+
+    @ViewBuilder
+    private func documentView(name: String, caption: String, file: TDFile?) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "doc.fill").font(.title2)
+            VStack(alignment: .leading) {
+                Text(name).font(.headline).lineLimit(1)
+                if !caption.isEmpty { Text(caption).font(.caption) }
+            }
+            Spacer()
+            if let file {
+                if let path = viewModel.localPath(for: file) {
+                    Button {
+                        viewModel.openFile(at: path)
+                    } label: {
+                        Image(systemName: "arrow.up.forward.square")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Open file")
+                } else {
+                    Button {
+                        Task { await viewModel.downloadFile(file) }
+                    } label: {
+                        Image(systemName: "arrow.down.circle")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Download file")
+                }
+            }
+        }
+    }
+
+    // MARK: - Audio Playback
+
+    private func toggleAudio(file: TDFile?) async {
+        if isPlayingAudio {
+            audioPlayer?.stop()
+            isPlayingAudio = false
+            return
+        }
+        guard let file else { return }
+        if let path = viewModel.localPath(for: file) {
+            playAudio(at: path)
+        } else {
+            await viewModel.downloadFile(file)
+            if let path = viewModel.localPath(for: file) {
+                playAudio(at: path)
+            }
+        }
+    }
+
+    private func playAudio(at path: String) {
+        let url = URL(fileURLWithPath: path)
+        audioPlayer = try? AVAudioPlayer(contentsOf: url)
+        audioPlayer?.play()
+        isPlayingAudio = true
+    }
+
     // MARK: - Time Row
 
     private var timeRow: some View {
         HStack(spacing: 4) {
+            if editDatePresent {
+                Text("edited").font(.caption2).foregroundStyle(isOutgoing ? .white.opacity(0.7) : .secondary)
+            }
             Text(message.timeString)
                 .font(.caption2)
                 .foregroundStyle(isOutgoing ? .white.opacity(0.7) : .secondary)
-
             if isOutgoing {
                 Image(systemName: message.isRead ? "checkmark.message.fill" : "checkmark.message")
                     .font(.caption2)
@@ -169,6 +329,8 @@ struct MessageBubbleView: View {
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
     }
+
+    private var editDatePresent: Bool { message.editDate != nil }
 
     // MARK: - Styling
 
@@ -182,15 +344,17 @@ struct MessageBubbleView: View {
     private var contextMenuItems: some View {
         Button("Reply") { onReply() }
         if case .text = message.content {
-            Button("Copy") { onCopy() }
+            Button("Copy") { viewModel.copyText(of: message) }
+        }
+        if message.isOutgoing {
+            Button("Edit") { onEdit() }
         }
         if message.canBeForwarded {
-            Button("Forward") {}  // TODO: forward UI
+            Button("Forward") { onForward() }
         }
         Divider()
         Button("Delete…", role: .destructive) { onDelete() }
     }
-
 }
 
 // MARK: - Bubble Shape
@@ -200,23 +364,19 @@ private struct BubbleShape: Shape {
 
     func path(in rect: CGRect) -> Path {
         let r: CGFloat = 16
-        let tailSize: CGFloat = 6
-
+        let tail: CGFloat = 6
         var path = Path()
         if isOutgoing {
-            let inset = CGRect(x: rect.minX, y: rect.minY, width: rect.width - tailSize, height: rect.height)
-            path.addRoundedRect(in: inset, cornerSize: CGSize(width: r, height: r))
+            path.addRoundedRect(in: CGRect(x: rect.minX, y: rect.minY, width: rect.width - tail, height: rect.height), cornerSize: CGSize(width: r, height: r))
         } else {
-            let inset = CGRect(x: rect.minX + tailSize, y: rect.minY, width: rect.width - tailSize, height: rect.height)
-            path.addRoundedRect(in: inset, cornerSize: CGSize(width: r, height: r))
+            path.addRoundedRect(in: CGRect(x: rect.minX + tail, y: rect.minY, width: rect.width - tail, height: rect.height), cornerSize: CGSize(width: r, height: r))
         }
         return path
     }
 }
 
-// MARK: - Helpers
+// MARK: - Duration (file-private copy)
 
 private func formatDuration(_ seconds: Int) -> String {
-    let m = seconds / 60, s = seconds % 60
-    return "\(m):\(String(format: "%02d", s))"
+    "\(seconds / 60):\(String(format: "%02d", seconds % 60))"
 }

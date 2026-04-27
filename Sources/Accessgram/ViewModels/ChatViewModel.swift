@@ -11,9 +11,30 @@ final class ChatViewModel {
     var replyToMessage: Message?
     var isLoading = false
     var isSending = false
+    var isLoadingMore = false
+    var hasMoreMessages = true
     var errorMessage: String?
 
-    private let client: TDLibClient
+    // Editing
+    var editingMessage: Message?
+    var editText = ""
+
+    // Forwarding
+    var showForwardSheet = false
+    var forwardSourceMessages: [Message] = []
+
+    // Search
+    var showSearch = false
+    var searchQuery = ""
+    var searchResults: [Message] = []
+
+    // Pinned
+    var pinnedMessage: Message?
+
+    // Downloaded file paths keyed by TDLib file id
+    var downloadedPaths: [Int32: String] = [:]
+
+    let client: TDLibClient
 
     init(chat: Chat, client: TDLibClient) {
         self.chat = chat
@@ -26,16 +47,38 @@ final class ChatViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            let jsonMsgs = try await client.getChatHistory(chatId: chat.id, limit: 50)
-            let loaded = jsonMsgs.compactMap { TDMessage(json: $0) }
-                                 .map { Message(tdMessage: $0) }
-            messages = loaded.reversed()
-
-            let ids = loaded.map { $0.id }
+            let raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
+            messages = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed()
+            let ids = messages.map { $0.id }
             await client.viewMessages(chatId: chat.id, ids: ids)
+            await loadPinnedMessage()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func loadOlderMessages() async {
+        guard !isLoadingMore, hasMoreMessages, let oldest = messages.first else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        do {
+            let raw = try await client.getChatHistory(chatId: chat.id, fromId: oldest.id, limit: 50)
+            let older = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed()
+            if older.isEmpty {
+                hasMoreMessages = false
+            } else {
+                messages.insert(contentsOf: older, at: 0)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func loadPinnedMessage() async {
+        guard chat.pinnedMessageId != 0 else { return }
+        guard let raw = try? await client.getMessage(chatId: chat.id, messageId: chat.pinnedMessageId),
+              let tdMsg = TDMessage(json: raw) else { return }
+        pinnedMessage = Message(tdMessage: tdMsg)
     }
 
     // MARK: - Send
@@ -47,27 +90,18 @@ final class ChatViewModel {
         isSending = true
         defer { isSending = false }
         do {
-            try await client.sendTextMessage(
-                chatId: chat.id,
-                text: text,
-                replyToId: replyToMessage?.id
-            )
+            try await client.sendTextMessage(chatId: chat.id, text: text, replyToId: replyToMessage?.id)
             replyToMessage = nil
         } catch {
             errorMessage = error.localizedDescription
-            draftText = text  // restore draft on failure
+            draftText = text
         }
     }
 
-    // MARK: - Reply / Delete
+    // MARK: - Reply / Delete / Copy
 
-    func startReply(to message: Message) {
-        replyToMessage = message
-    }
-
-    func cancelReply() {
-        replyToMessage = nil
-    }
+    func startReply(to message: Message) { replyToMessage = message }
+    func cancelReply() { replyToMessage = nil }
 
     func deleteMessage(_ message: Message, forAll: Bool) async {
         do {
@@ -82,6 +116,23 @@ final class ChatViewModel {
             NSPasteboard.general.clearContents()
             NSPasteboard.general.setString(t, forType: .string)
         }
+    }
+
+    // MARK: - File Download
+
+    func localPath(for file: TDFile) -> String? {
+        file.localPath ?? downloadedPaths[file.id]
+    }
+
+    func downloadFile(_ file: TDFile) async {
+        guard !file.isDownloaded, downloadedPaths[file.id] == nil, file.id != 0 else { return }
+        if let path = try? await client.downloadFile(fileId: file.id) {
+            downloadedPaths[file.id] = path
+        }
+    }
+
+    func openFile(at path: String) {
+        NSWorkspace.shared.open(URL(fileURLWithPath: path))
     }
 
     // MARK: - Update Handling
@@ -102,31 +153,54 @@ final class ChatViewModel {
             }
 
         case .messageSendFailed(let chatId, let oldId, let err) where chatId == chat.id:
-            if let i = messages.firstIndex(where: { $0.id == oldId }) {
-                messages.remove(at: i)
-            }
+            messages.removeAll { $0.id == oldId }
             errorMessage = err
 
         case .messagesDeleted(let chatId, let ids) where chatId == chat.id:
             messages.removeAll { ids.contains($0.id) }
+
+        case .messageEdited(let chatId, let messageId) where chatId == chat.id:
+            Task { await refreshMessage(id: messageId) }
+
+        case .messageReactionsChanged(let chatId, let messageId) where chatId == chat.id:
+            Task { await refreshMessage(id: messageId) }
+
+        case .chatReadOutbox(let chatId, let lastId) where chatId == chat.id:
+            for i in messages.indices where messages[i].isOutgoing && messages[i].id <= lastId {
+                messages[i].isRead = true
+            }
+
+        case .chatPinnedMessageChanged(let chatId, let msgId) where chatId == chat.id:
+            chat.pinnedMessageId = msgId
+            Task { await loadPinnedMessage() }
+
+        case .fileUpdated(let fileId, let path):
+            if let path { downloadedPaths[fileId] = path }
 
         default:
             break
         }
     }
 
-    // MARK: - VoiceOver Announcement
+    private func refreshMessage(id: Int64) async {
+        guard let raw = try? await client.getMessage(chatId: chat.id, messageId: id),
+              let tdMsg = TDMessage(json: raw) else { return }
+        let updated = Message(tdMessage: tdMsg)
+        if let i = messages.firstIndex(where: { $0.id == id }) {
+            messages[i] = updated
+        }
+    }
+
+    // MARK: - VoiceOver
 
     private func announceNewMessage(_ message: Message) {
         guard !message.isOutgoing else { return }
-        let text = message.fullAccessibilityLabel
         NSAccessibility.post(
             element: NSApp as AnyObject,
             notification: .announcementRequested,
             userInfo: [
-                NSAccessibility.NotificationUserInfoKey.announcement: text as NSString,
-                NSAccessibility.NotificationUserInfoKey.priority:
-                    NSAccessibilityPriorityLevel.high.rawValue
+                NSAccessibility.NotificationUserInfoKey.announcement: message.fullAccessibilityLabel as NSString,
+                NSAccessibility.NotificationUserInfoKey.priority: NSAccessibilityPriorityLevel.high.rawValue
             ]
         )
     }

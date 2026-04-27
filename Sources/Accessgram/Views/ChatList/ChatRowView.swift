@@ -5,18 +5,21 @@ struct ChatRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Avatar
             AvatarView(title: chat.title, size: 44)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
-                HStack {
+                HStack(spacing: 4) {
+                    if chat.isPinned {
+                        Image(systemName: "pin.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
+                    }
                     Text(chat.title)
                         .font(.headline)
                         .lineLimit(1)
-
                     Spacer()
-
                     if let last = chat.lastMessage {
                         Text(last.timeString)
                             .font(.caption)
@@ -29,28 +32,41 @@ struct ChatRowView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
-
                     Spacer()
-
-                    if chat.unreadCount > 0 {
-                        Text("\(chat.unreadCount)")
-                            .font(.caption.bold())
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(chat.isMuted ? Color.secondary : Color.accentColor)
-                            .foregroundStyle(.white)
-                            .clipShape(Capsule())
-                            .accessibilityHidden(true)  // included in row label
-                    }
+                    badgeArea
                 }
             }
         }
         .padding(.vertical, 4)
-        // Single accessible element for the whole row
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(chat.accessibilityLabel)
         .accessibilityHint("Open conversation")
         .accessibilityAddTraits(.isButton)
+    }
+
+    @ViewBuilder
+    private var badgeArea: some View {
+        if chat.isMuted {
+            Image(systemName: "bell.slash.fill")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+        }
+        if chat.unreadCount > 0 {
+            Text("\(chat.unreadCount)")
+                .font(.caption.bold())
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(chat.isMuted ? Color.secondary : Color.accentColor)
+                .foregroundStyle(.white)
+                .clipShape(Capsule())
+                .accessibilityHidden(true)
+        } else if chat.isMarkedAsUnread {
+            Circle()
+                .fill(chat.isMuted ? Color.secondary : Color.accentColor)
+                .frame(width: 8, height: 8)
+                .accessibilityHidden(true)
+        }
     }
 }
 
@@ -65,7 +81,7 @@ struct AvatarView: View {
     }
 
     private var color: Color {
-        let colors: [Color] = [.blue, .purple, .green, .orange, .red, .teal, .indigo]
+        let colors: [Color] = [.blue, .green, .indigo, .orange, .purple, .red, .teal]
         let idx = abs(title.hashValue) % colors.count
         return colors[idx]
     }

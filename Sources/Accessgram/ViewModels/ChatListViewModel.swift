@@ -7,17 +7,16 @@ final class ChatListViewModel {
     var chats: [Chat] = []
     var isLoading = false
     var searchQuery = ""
+    var folders: [ChatFolder] = []
+    var activeFolderId: Int?
     var errorMessage: String?
 
     var filteredChats: [Chat] {
         if searchQuery.isEmpty { return chats }
-        return chats.filter {
-            $0.title.localizedCaseInsensitiveContains(searchQuery)
-        }
+        return chats.filter { $0.title.localizedCaseInsensitiveContains(searchQuery) }
     }
 
     private let client: TDLibClient
-    private var userCache: [Int64: User] = [:]
 
     init(client: TDLibClient) {
         self.client = client
@@ -29,10 +28,16 @@ final class ChatListViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            try await client.loadChatList(limit: 30)
+            try await client.loadChatList(limit: 50)
+            await loadFolders()
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    func loadFolders() async {
+        guard let raw = try? await client.getChatFolders() else { return }
+        folders = raw.map { ChatFolder(json: $0) }
     }
 
     // MARK: - Update Handling
@@ -50,8 +55,17 @@ final class ChatListViewModel {
             guard let i = index(for: chatId) else { return }
             chats[i].unreadCount = unread
 
-        case .chatPosition:
-            break  // ordering handled by bringToTop for now
+        case .chatNotificationSettingsChanged(let chatId, let muted):
+            guard let i = index(for: chatId) else { return }
+            chats[i].isMuted = muted
+
+        case .chatIsMarkedAsUnreadChanged(let chatId, let marked):
+            guard let i = index(for: chatId) else { return }
+            chats[i].isMarkedAsUnread = marked
+
+        case .chatPinnedMessageChanged(let chatId, let msgId):
+            guard let i = index(for: chatId) else { return }
+            chats[i].pinnedMessageId = msgId
 
         default:
             break
@@ -61,12 +75,51 @@ final class ChatListViewModel {
     func addOrUpdate(from json: [String: Any]) {
         guard let chat = Chat(json: json) else { return }
         if let i = index(for: chat.id) {
-            // Preserve updated unread counts etc. if already loaded
             var merged = chat
             merged.unreadCount = max(chat.unreadCount, chats[i].unreadCount)
+            merged.isMuted = chats[i].isMuted
             chats[i] = merged
         } else {
             chats.append(chat)
+        }
+    }
+
+    // MARK: - Actions
+
+    func archiveChat(_ chat: Chat) async {
+        do {
+            try await client.archiveChat(chatId: chat.id)
+            chats.removeAll { $0.id == chat.id }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func togglePinned(_ chat: Chat) async {
+        do {
+            try await client.toggleChatIsPinned(chatId: chat.id, isPinned: !chat.isPinned)
+            if let i = index(for: chat.id) {
+                chats[i].isPinned.toggle()
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func toggleMuted(_ chat: Chat) async {
+        do {
+            let muteFor = chat.isMuted ? 0 : 2_147_483_647
+            try await client.muteChat(chatId: chat.id, muteFor: muteFor)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func toggleMarkedUnread(_ chat: Chat) async {
+        do {
+            try await client.toggleChatIsMarkedAsUnread(chatId: chat.id, isMarked: !chat.isMarkedAsUnread)
+        } catch {
+            errorMessage = error.localizedDescription
         }
     }
 

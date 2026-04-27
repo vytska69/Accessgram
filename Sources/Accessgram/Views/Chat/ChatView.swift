@@ -1,9 +1,11 @@
+import AppKit
 import SwiftUI
 
 struct ChatView: View {
     let chat: Chat
     let client: TDLibClient
     @State private var viewModel: ChatViewModel
+    @State private var showProfile = false
     @AccessibilityFocusState private var inputFocused: Bool
 
     init(chat: Chat, client: TDLibClient) {
@@ -16,63 +18,19 @@ struct ChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Message list
-            ScrollViewReader { proxy in
-                ScrollView {
-                    LazyVStack(spacing: 2) {
-                        ForEach(viewModel.messages) { message in
-                            MessageBubbleView(
-                                message: message,
-                                onReply: { viewModel.startReply(to: message) },
-                                onCopy: { viewModel.copyText(of: message) },
-                                onDelete: { Task { await viewModel.deleteMessage(message, forAll: false) } }
-                            )
-                            .id(message.id)
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                }
-                .onChange(of: viewModel.messages.count) { _, _ in
-                    if let last = viewModel.messages.last {
-                        withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
-                    }
-                }
-            }
-
-            // Reply preview
-            if let reply = viewModel.replyToMessage {
-                ReplyPreviewBar(message: reply) {
-                    viewModel.cancelReply()
-                }
-            }
-
-            Divider()
-
-            // Input
-            MessageInputView(
-                text: Binding(
-                    get: { viewModel.draftText },
-                    set: { viewModel.draftText = $0 }
-                ),
-                isSending: viewModel.isSending,
-                inputFocused: $inputFocused
-            ) {
-                Task { await viewModel.sendMessage() }
-            }
+            if let pinned = viewModel.pinnedMessage { pinnedBanner(pinned) }
+            if viewModel.showSearch { searchBar }
+            messageList
+            bottomBar
         }
         .navigationTitle(chat.title)
         .navigationSubtitle(chat.type.typeLabel)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button {
-                    inputFocused = true
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                }
-                .accessibilityLabel("Focus message input")
-                .keyboardShortcut("n", modifiers: .command)
-            }
+        .toolbar { toolbarItems }
+        .sheet(isPresented: $showProfile) {
+            ProfileView(chat: chat)
+        }
+        .sheet(isPresented: $viewModel.showForwardSheet) {
+            ForwardView(viewModel: viewModel)
         }
         .task {
             await client.addUpdateHandler { update in
@@ -89,6 +47,169 @@ struct ChatView: View {
             Text(viewModel.errorMessage ?? "")
         }
     }
+
+    // MARK: - Pinned Banner
+
+    private func pinnedBanner(_ message: Message) -> some View {
+        PinnedMessageBanner(message: message) {
+            // scroll handled by id — no-op for now
+        } onDismiss: {
+            viewModel.pinnedMessage = nil
+        }
+    }
+
+    // MARK: - Search Bar
+
+    private var searchBar: some View {
+        HStack {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary).accessibilityHidden(true)
+            TextField("Search in chat", text: Binding(
+                get: { viewModel.searchQuery },
+                set: { viewModel.searchQuery = $0 }
+            ))
+            .textFieldStyle(.plain)
+            .onSubmit { Task { await viewModel.runSearch() } }
+            .accessibilityLabel("Search messages")
+            Button {
+                viewModel.showSearch = false
+                viewModel.searchQuery = ""
+                viewModel.searchResults = []
+            } label: {
+                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close search")
+        }
+        .padding(8)
+        .background(.quinary)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+    }
+
+    // MARK: - Message List
+
+    private var messageList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 2) {
+                    loadMoreButton
+                    ForEach(displayMessages) { message in
+                        MessageBubbleView(
+                            message: message,
+                            viewModel: viewModel,
+                            onReply: { viewModel.startReply(to: message) },
+                            onEdit: { viewModel.startEditing(message) },
+                            onForward: { viewModel.startForward(message) },
+                            onDelete: { Task { await viewModel.deleteMessage(message, forAll: false) } }
+                        )
+                        .id(message.id)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+            .onChange(of: viewModel.messages.count) { _, _ in
+                if let last = viewModel.messages.last {
+                    withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                }
+            }
+        }
+    }
+
+    private var displayMessages: [Message] {
+        viewModel.showSearch && !viewModel.searchResults.isEmpty
+            ? viewModel.searchResults
+            : viewModel.messages
+    }
+
+    @ViewBuilder
+    private var loadMoreButton: some View {
+        if viewModel.hasMoreMessages && !viewModel.showSearch {
+            Button {
+                Task { await viewModel.loadOlderMessages() }
+            } label: {
+                if viewModel.isLoadingMore {
+                    ProgressView().scaleEffect(0.7)
+                } else {
+                    Text("Load older messages").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            .buttonStyle(.plain)
+            .padding(.vertical, 4)
+        }
+    }
+
+    // MARK: - Bottom Bar
+
+    @ViewBuilder
+    private var bottomBar: some View {
+        if let msg = viewModel.editingMessage {
+            editBar(for: msg)
+        } else if let reply = viewModel.replyToMessage {
+            ReplyPreviewBar(message: reply) { viewModel.cancelReply() }
+        }
+        Divider()
+        MessageInputView(
+            text: Binding(get: { viewModel.draftText }, set: { viewModel.draftText = $0 }),
+            isSending: viewModel.isSending,
+            inputFocused: $inputFocused,
+            onAttach: { url in Task { await viewModel.sendAttachment(url: url) } },
+            onSend: {
+                if viewModel.editingMessage != nil {
+                    Task { await viewModel.submitEdit() }
+                } else {
+                    Task { await viewModel.sendMessage() }
+                }
+            }
+        )
+    }
+
+    private func editBar(for message: Message) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "pencil").foregroundStyle(Color.accentColor).accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Edit Message").font(.caption.bold()).foregroundStyle(Color.accentColor)
+                Text(message.content.previewText).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Spacer()
+            Button(action: viewModel.cancelEditing) {
+                Image(systemName: "xmark").font(.caption.bold())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cancel editing")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.quinary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Editing: \(message.content.previewText). Button: Cancel.")
+    }
+
+    // MARK: - Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarItems: some ToolbarContent {
+        ToolbarItem(placement: .primaryAction) {
+            Button { inputFocused = true } label: {
+                Image(systemName: "square.and.pencil")
+            }
+            .accessibilityLabel("Focus message input")
+            .keyboardShortcut("n", modifiers: .command)
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button { viewModel.showSearch.toggle() } label: {
+                Image(systemName: "magnifyingglass")
+            }
+            .accessibilityLabel("Search in chat")
+            .keyboardShortcut("f", modifiers: .command)
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button { showProfile = true } label: {
+                Image(systemName: "person.circle")
+            }
+            .accessibilityLabel("View profile")
+        }
+    }
 }
 
 // MARK: - Reply Preview Bar
@@ -99,26 +220,16 @@ private struct ReplyPreviewBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Rectangle()
-                .fill(Color.accentColor)
-                .frame(width: 3)
-
+            Rectangle().fill(Color.accentColor).frame(width: 3).accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(message.isOutgoing ? "You" : message.senderName)
-                    .font(.caption.bold())
-                    .foregroundStyle(Color.accentColor)
-
+                    .font(.caption.bold()).foregroundStyle(Color.accentColor)
                 Text(message.content.previewText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
-
             Spacer()
-
             Button(action: onCancel) {
-                Image(systemName: "xmark")
-                    .font(.caption.bold())
+                Image(systemName: "xmark").font(.caption.bold())
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Cancel reply")

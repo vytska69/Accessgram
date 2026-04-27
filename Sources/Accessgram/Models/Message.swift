@@ -9,32 +9,39 @@ struct Message: Identifiable, Hashable {
     var date: Date
     var isOutgoing: Bool
     var isRead: Bool
+    var editDate: Date?
     var canBeRepliedTo: Bool
     var canBeForwarded: Bool
     var canBeDeleted: Bool
-    var editDate: Date?
+    var replyToMessageId: Int64?
+    var replyQuoteText: String?
+    var forwardOriginName: String?
+    var reactions: [MessageReaction]
 
-    // MARK: - Accessors
+    // MARK: - Computed
 
     var timeString: String {
-        let f = DateFormatter()
-        f.timeStyle = .short
-        return f.string(from: date)
+        let fmt = DateFormatter()
+        fmt.timeStyle = .short
+        return fmt.string(from: date)
     }
 
     var accessibilityPreview: String {
-        let who = isOutgoing ? "You" : senderName
-        return "\(who): \(content.previewText)"
+        "\(isOutgoing ? "You" : senderName): \(content.previewText)"
     }
 
-    /// Full label read by VoiceOver when focus lands on a message bubble.
     var fullAccessibilityLabel: String {
         var parts: [String] = []
         parts.append(isOutgoing ? "You" : senderName)
+        if let fwd = forwardOriginName { parts.append("Forwarded from \(fwd)") }
         parts.append(content.accessibilityDescription)
         parts.append("at \(timeString)")
         if isOutgoing && isRead { parts.append("Read") }
         if editDate != nil { parts.append("Edited") }
+        if !reactions.isEmpty {
+            let summary = reactions.map { "\($0.emoji) \($0.count)" }.joined(separator: ", ")
+            parts.append("Reactions: \(summary)")
+        }
         return parts.joined(separator: ", ")
     }
 
@@ -43,20 +50,24 @@ struct Message: Identifiable, Hashable {
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
     static func == (lhs: Self, rhs: Self) -> Bool { lhs.id == rhs.id }
 
-    // MARK: - Init from TDMessage
+    // MARK: - Init
 
     init(tdMessage: TDMessage, senderName: String = "") {
-        self.id = tdMessage.id
-        self.chatId = tdMessage.chatId
-        self.sender = tdMessage.sender
+        id = tdMessage.id
+        chatId = tdMessage.chatId
+        sender = tdMessage.sender
         self.senderName = senderName
-        self.content = tdMessage.content
-        self.date = Date(timeIntervalSince1970: TimeInterval(tdMessage.date))
-        self.isOutgoing = tdMessage.isOutgoing
-        self.isRead = false
-        self.canBeRepliedTo = true
-        self.canBeForwarded = tdMessage.canBeForwarded
-        self.canBeDeleted = tdMessage.canBeDeletedForAll
-        self.editDate = nil
+        content = tdMessage.content
+        date = Date(timeIntervalSince1970: TimeInterval(tdMessage.date))
+        isOutgoing = tdMessage.isOutgoing
+        isRead = false
+        canBeRepliedTo = true
+        canBeForwarded = tdMessage.canBeForwarded
+        canBeDeleted = tdMessage.canBeDeletedForAll
+        editDate = nil
+        replyToMessageId = tdMessage.replyToMessageId
+        replyQuoteText = tdMessage.replyQuoteText
+        forwardOriginName = tdMessage.forwardOriginName
+        reactions = tdMessage.reactions
     }
 }

@@ -5,7 +5,6 @@ import Observation
 
 enum AuthState: Equatable {
     case launching
-    case needsCredentials
     case waitingForPhone
     case waitingForCode(phone: String)
     case waitingForPassword
@@ -21,7 +20,9 @@ final class AppViewModel {
     var authState: AuthState = .launching
     var errorMessage: String?
 
-    private var hasSetupHandlers = false
+    private let apiId: Int = 23618133
+    private let apiHash: String = "421fd1c66ea61e98d93734fe729f6181"
+
     let client: TDLibClient
 
     init() {
@@ -30,27 +31,11 @@ final class AppViewModel {
     }
 
     func boot() async {
-        let storedId = UserDefaults.standard.integer(forKey: "apiId")
-        let storedHash = UserDefaults.standard.string(forKey: "apiHash") ?? ""
-        guard storedId != 0, !storedHash.isEmpty else {
-            authState = .needsCredentials
-            return
+        await client.addUpdateHandler { [weak self] update in
+            await self?.handleUpdate(update)
         }
-        if !hasSetupHandlers {
-            await client.addUpdateHandler { [weak self] update in
-                await self?.handleUpdate(update)
-            }
-            await client.start()
-            hasSetupHandlers = true
-        }
-        await client.setParameters(apiId: storedId, apiHash: storedHash)
-    }
-
-    func saveCredentials(apiId: Int, apiHash: String) async {
-        UserDefaults.standard.set(apiId, forKey: "apiId")
-        UserDefaults.standard.set(apiHash, forKey: "apiHash")
-        authState = .launching
-        await boot()
+        await client.start()
+        await client.setParameters(apiId: apiId, apiHash: apiHash)
     }
 
     private func handleUpdate(_ update: TDUpdate) async {

@@ -11,9 +11,6 @@ struct RootView: View {
                     .frame(width: 300, height: 200)
                     .accessibilityLabel("Connecting to Telegram")
 
-            case .needsCredentials:
-                CredentialsView()
-
             case .waitingForPhone:
                 AuthView()
 

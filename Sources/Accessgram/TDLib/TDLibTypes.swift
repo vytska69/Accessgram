@@ -78,7 +78,6 @@ enum MessageContent {
     case poll(question: String)
     case unknown(type: String)
 
-    // swiftlint:disable:next function_body_length
     init(json: [String: Any]) {
         switch json["@type"] as? String ?? "" {
         case "messageText":
@@ -138,7 +137,6 @@ enum MessageContent {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     var accessibilityDescription: String {
         switch self {
         case .text(let t): return t
@@ -211,7 +209,6 @@ struct TDMessage {
     let forwardOriginName: String?
     let reactions: [MessageReaction]
 
-    // swiftlint:disable:next function_body_length
     init?(json: [String: Any]) {
         guard let id = json["id"] as? Int64, let chatId = json["chat_id"] as? Int64 else { return nil }
         self.id = id
@@ -272,7 +269,8 @@ enum UserStatus {
         case .offline(let d):
             let fmt = RelativeDateTimeFormatter()
             fmt.unitsStyle = .full
-            return "Last seen \(fmt.localizedString(for: Date(timeIntervalSince1970: TimeInterval(d)), relativeTo: Date()))"
+            let date = Date(timeIntervalSince1970: TimeInterval(d))
+            return "Last seen \(fmt.localizedString(for: date, relativeTo: Date()))"
         case .recently: return "Last seen recently"
         case .lastWeek: return "Last seen last week"
         case .lastMonth: return "Last seen last month"

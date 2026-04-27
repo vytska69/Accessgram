@@ -29,7 +29,6 @@ enum TDUpdate {
         self = .unknown(type: type)
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     private static func parseMessage(type: String, json: [String: Any]) -> Self? {
         switch type {
         case "updateAuthorizationState":
@@ -76,7 +75,6 @@ enum TDUpdate {
         }
     }
 
-    // swiftlint:disable:next cyclomatic_complexity
     private static func parseChat(type: String, json: [String: Any]) -> Self? {
         switch type {
         case "updateChatLastMessage":

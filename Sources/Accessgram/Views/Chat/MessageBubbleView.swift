@@ -366,10 +366,13 @@ private struct BubbleShape: Shape {
         let r: CGFloat = 16
         let tail: CGFloat = 6
         var path = Path()
+        let cornerSize = CGSize(width: r, height: r)
         if isOutgoing {
-            path.addRoundedRect(in: CGRect(x: rect.minX, y: rect.minY, width: rect.width - tail, height: rect.height), cornerSize: CGSize(width: r, height: r))
+            let rect2 = CGRect(x: rect.minX, y: rect.minY, width: rect.width - tail, height: rect.height)
+            path.addRoundedRect(in: rect2, cornerSize: cornerSize)
         } else {
-            path.addRoundedRect(in: CGRect(x: rect.minX + tail, y: rect.minY, width: rect.width - tail, height: rect.height), cornerSize: CGSize(width: r, height: r))
+            let rect2 = CGRect(x: rect.minX + tail, y: rect.minY, width: rect.width - tail, height: rect.height)
+            path.addRoundedRect(in: rect2, cornerSize: cornerSize)
         }
         return path
     }

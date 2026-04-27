@@ -94,21 +94,64 @@ actor TDLibClient {
         let sysVersion = "\(osVer.majorVersion).\(osVer.minorVersion).\(osVer.patchVersion)"
         let langCode = Locale.current.language.languageCode?.identifier ?? "en"
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        _ = try await sendRaw("setTdlibParameters", params: [
-            "use_test_dc": useTestDc,
-            "database_directory": dbPath,
-            "files_directory": filesPath,
-            "use_file_database": true,
-            "use_chat_info_database": true,
-            "use_message_database": true,
-            "use_secret_chats": false,
-            "api_id": Int32(apiId),
-            "api_hash": apiHash,
-            "system_language_code": langCode,
-            "device_model": "Mac",
-            "system_version": sysVersion,
-            "application_version": appVersion
-        ])
+        let extra = nextExtra()
+        let req = TDSetParametersPayload(
+            extra: extra,
+            useTestDc: useTestDc,
+            databaseDirectory: dbPath,
+            filesDirectory: filesPath,
+            apiId: apiId,
+            apiHash: apiHash,
+            systemLanguageCode: langCode,
+            systemVersion: sysVersion,
+            applicationVersion: appVersion
+        )
+        guard let data = try? JSONEncoder().encode(req),
+              let jsonStr = String(data: data, encoding: .utf8) else {
+            throw TDError.encodingFailed
+        }
+        _ = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[String: Any], Error>) in
+            pendingRequests[extra] = cont
+            td_send(clientId, jsonStr)
+        }
+    }
+}
+
+// MARK: - setTdlibParameters payload (Codable guarantees true/false for booleans)
+
+private struct TDSetParametersPayload: Encodable {
+    var type = "setTdlibParameters"
+    var extra: String
+    var useTestDc: Bool
+    var databaseDirectory: String
+    var filesDirectory: String
+    var useFileDatabase = true
+    var useChatInfoDatabase = true
+    var useMessageDatabase = true
+    var useSecretChats = false
+    var apiId: Int
+    var apiHash: String
+    var systemLanguageCode: String
+    var deviceModel = "Mac"
+    var systemVersion: String
+    var applicationVersion: String
+
+    enum CodingKeys: String, CodingKey {
+        case type = "@type"
+        case extra = "@extra"
+        case useTestDc = "use_test_dc"
+        case databaseDirectory = "database_directory"
+        case filesDirectory = "files_directory"
+        case useFileDatabase = "use_file_database"
+        case useChatInfoDatabase = "use_chat_info_database"
+        case useMessageDatabase = "use_message_database"
+        case useSecretChats = "use_secret_chats"
+        case apiId = "api_id"
+        case apiHash = "api_hash"
+        case systemLanguageCode = "system_language_code"
+        case deviceModel = "device_model"
+        case systemVersion = "system_version"
+        case applicationVersion = "application_version"
     }
 }
 

@@ -167,7 +167,6 @@ jobs:
             echo "1. Download \`${DMG_NAME}\` below"
             echo "2. Open the DMG and drag **Accessgram** to **Applications**"
             echo "3. First launch: right-click -> **Open** (bypasses Gatekeeper)"
-            echo "4. Add your API credentials from [my.telegram.org](https://my.telegram.org)"
             echo ""
             echo "### What's included"
             echo "- Accessgram binary (macOS 14+, Apple Silicon)"

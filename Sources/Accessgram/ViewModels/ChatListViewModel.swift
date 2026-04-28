@@ -27,10 +27,13 @@ final class ChatListViewModel {
     func loadInitial() async {
         isLoading = true
         defer { isLoading = false }
+        Log.write("ChatListVM: loadInitial start")
         do {
             try await client.loadChatList(limit: 50)
+            Log.write("ChatListVM: loadChatList ok, chats=\(chats.count)")
             await loadFolders()
         } catch {
+            Log.write("ChatListVM: loadChatList error: \(error)")
             errorMessage = error.localizedDescription
         }
     }
@@ -45,6 +48,7 @@ final class ChatListViewModel {
     func handleUpdate(_ update: TDUpdate) {
         switch update {
         case .updateChat(let chatJSON):
+            Log.write("ChatListVM: updateChat/updateNewChat id=\(chatJSON["id"] ?? "?")")
             addOrUpdate(from: chatJSON)
 
         case .newMessage(let msg):

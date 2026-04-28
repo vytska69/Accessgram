@@ -108,6 +108,9 @@ enum TDUpdate {
                 chatId: json["chat_id"] as? Int64 ?? 0,
                 isMarked: json["is_marked_as_unread"] as? Bool ?? false
             )
+        case "updateNewChat":
+            guard let chat = json["chat"] as? [String: Any] else { return nil }
+            return .updateChat(chatJSON: chat)
         case "updateChat":
             guard let chat = json["chat"] as? [String: Any] else { return nil }
             return .updateChat(chatJSON: chat)

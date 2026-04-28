@@ -87,11 +87,6 @@ actor TDLibClient {
 
     // MARK: - Setup
 
-    // Required by TDLib 1.7.x between waitTdlibParameters and waitPhoneNumber.
-    func checkEncryptionKey() {
-        td_send(clientId, "{\"@type\":\"checkDatabaseEncryptionKey\",\"encryption_key\":\"\"}")
-    }
-
     // Fire-and-forget: TDLib responds via updateAuthorizationState, not a direct reply.
     // Call this only in response to authorizationStateWaitTdlibParameters.
     func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) throws {
@@ -105,7 +100,7 @@ actor TDLibClient {
         let sysVersion = "\(osVer.majorVersion).\(osVer.minorVersion).\(osVer.patchVersion)"
         let langCode = Locale.current.language.languageCode?.identifier ?? "en"
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let inner = TDlibParametersPayload(
+        let req = TDSetParametersPayload(
             useTestDc: useTestDc,
             databaseDirectory: dbPath,
             filesDirectory: filesPath,
@@ -115,7 +110,6 @@ actor TDLibClient {
             systemVersion: sysVersion,
             applicationVersion: appVersion
         )
-        let req = TDSetParametersPayload(parameters: inner)
         guard let data = try? JSONEncoder().encode(req),
               let jsonStr = String(data: data, encoding: .utf8) else {
             throw TDError.encodingFailed
@@ -125,23 +119,14 @@ actor TDLibClient {
     }
 }
 
-// MARK: - setTdlibParameters payload (nested format required by TDLib 1.8.x)
+// MARK: - setTdlibParameters payload (flat format for TDLib master / 1.8.x+)
 
 private struct TDSetParametersPayload: Encodable {
     var type = "setTdlibParameters"
-    var parameters: TDlibParametersPayload
-
-    enum CodingKeys: String, CodingKey {
-        case type = "@type"
-        case parameters
-    }
-}
-
-private struct TDlibParametersPayload: Encodable {
-    var type = "tdlibParameters"
     var useTestDc: Bool
     var databaseDirectory: String
     var filesDirectory: String
+    var databaseEncryptionKey = ""
     var useFileDatabase = true
     var useChatInfoDatabase = true
     var useMessageDatabase = true
@@ -160,6 +145,7 @@ private struct TDlibParametersPayload: Encodable {
         case useTestDc = "use_test_dc"
         case databaseDirectory = "database_directory"
         case filesDirectory = "files_directory"
+        case databaseEncryptionKey = "database_encryption_key"
         case useFileDatabase = "use_file_database"
         case useChatInfoDatabase = "use_chat_info_database"
         case useMessageDatabase = "use_message_database"

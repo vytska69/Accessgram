@@ -56,10 +56,6 @@ final class AppViewModel {
                     authState = .error(error.localizedDescription)
                 }
             }
-            if case .waitEncryptionKey = state {
-                Log.write("sending checkDatabaseEncryptionKey")
-                await client.checkEncryptionKey()
-            }
             applyAuthState(state)
         default:
             break

@@ -24,7 +24,7 @@ enum Log {
                 handle.write(data)
                 try? handle.close()
             } else {
-                try? data.write(to: fileURL, atomically: false, encoding: .utf8)
+                try? data.write(to: fileURL)
             }
         }
     }

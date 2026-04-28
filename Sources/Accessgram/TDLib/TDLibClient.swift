@@ -83,7 +83,9 @@ actor TDLibClient {
 
     // MARK: - Setup
 
-    func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) async throws {
+    // Fire-and-forget: TDLib responds via updateAuthorizationState, not a direct reply.
+    // Call this only in response to authorizationStateWaitTdlibParameters.
+    func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) throws {
         let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
         let base = support.appendingPathComponent(useTestDc ? "Accessgram-test" : "Accessgram")
         let dbPath = base.appendingPathComponent("td_db").path
@@ -94,9 +96,7 @@ actor TDLibClient {
         let sysVersion = "\(osVer.majorVersion).\(osVer.minorVersion).\(osVer.patchVersion)"
         let langCode = Locale.current.language.languageCode?.identifier ?? "en"
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let extra = nextExtra()
         let req = TDSetParametersPayload(
-            extra: extra,
             useTestDc: useTestDc,
             databaseDirectory: dbPath,
             filesDirectory: filesPath,
@@ -110,10 +110,7 @@ actor TDLibClient {
               let jsonStr = String(data: data, encoding: .utf8) else {
             throw TDError.encodingFailed
         }
-        _ = try await withCheckedThrowingContinuation { (cont: CheckedContinuation<[String: Any], Error>) in
-            pendingRequests[extra] = cont
-            td_send(clientId, jsonStr)
-        }
+        td_send(clientId, jsonStr)
     }
 }
 
@@ -121,7 +118,6 @@ actor TDLibClient {
 
 private struct TDSetParametersPayload: Encodable {
     var type = "setTdlibParameters"
-    var extra: String
     var useTestDc: Bool
     var databaseDirectory: String
     var filesDirectory: String
@@ -138,7 +134,6 @@ private struct TDSetParametersPayload: Encodable {
 
     enum CodingKeys: String, CodingKey {
         case type = "@type"
-        case extra = "@extra"
         case useTestDc = "use_test_dc"
         case databaseDirectory = "database_directory"
         case filesDirectory = "files_directory"

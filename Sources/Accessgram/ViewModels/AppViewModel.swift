@@ -36,17 +36,19 @@ final class AppViewModel {
             await self?.handleUpdate(update)
         }
         await client.start()
-        do {
-            try await client.setParameters(apiId: apiId, apiHash: apiHash)
-        } catch {
-            authState = .error(error.localizedDescription)
-        }
     }
 
     private func handleUpdate(_ update: TDUpdate) async {
         switch update {
         case .authorizationState(let state):
-            await MainActor.run { applyAuthState(state) }
+            if case .waitTdlibParameters = state {
+                do {
+                    try await client.setParameters(apiId: apiId, apiHash: apiHash)
+                } catch {
+                    authState = .error(error.localizedDescription)
+                }
+            }
+            applyAuthState(state)
         default:
             break
         }

@@ -27,8 +27,8 @@ jobs:
           path: |
             ~/Library/Caches/Homebrew
             /opt/homebrew/Cellar/tdlib
-          key: homebrew-tdlib-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: homebrew-tdlib-${{ runner.os }}-
+          key: homebrew-tdlib-${{ runner.os }}-v2-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: homebrew-tdlib-${{ runner.os }}-v2-
 
       - name: Install TDLib
         run: brew install tdlib && brew link --overwrite tdlib
@@ -108,8 +108,8 @@ jobs:
           path: |
             ~/Library/Caches/Homebrew
             /opt/homebrew/Cellar/tdlib
-          key: homebrew-tdlib-${{ runner.os }}-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: homebrew-tdlib-${{ runner.os }}-
+          key: homebrew-tdlib-${{ runner.os }}-v2-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: homebrew-tdlib-${{ runner.os }}-v2-
 
       - name: Install TDLib
         run: brew install tdlib && brew link --overwrite tdlib

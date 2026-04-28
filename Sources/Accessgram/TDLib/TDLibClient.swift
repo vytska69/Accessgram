@@ -52,6 +52,7 @@ actor TDLibClient {
               let jsonStr = String(data: data, encoding: .utf8) else {
             throw TDError.encodingFailed
         }
+        Log.write("→ \(jsonStr.prefix(400))")
         return try await withCheckedThrowingContinuation { continuation in
             pendingRequests[extra] = continuation
             td_send(clientId, jsonStr)

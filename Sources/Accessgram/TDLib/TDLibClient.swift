@@ -34,6 +34,8 @@ actor TDLibClient {
                 }
             }
         }
+        // New JSON API requires at least one outbound request before TDLib starts sending updates.
+        td_send(clientId, "{\"@type\":\"getOption\",\"name\":\"version\"}")
     }
 
     func addUpdateHandler(_ handler: @escaping (TDUpdate) async -> Void) {

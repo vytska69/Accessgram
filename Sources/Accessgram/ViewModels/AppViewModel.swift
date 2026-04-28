@@ -27,28 +27,37 @@ final class AppViewModel {
     let client: TDLibClient
 
     init() {
+        Log.clear()
+        Log.write("App init")
         self.client = TDLibClient()
         Task { await self.boot() }
     }
 
     func boot() async {
+        Log.write("boot() start")
         await client.addUpdateHandler { [weak self] update in
             await self?.handleUpdate(update)
         }
         await client.start()
+        Log.write("boot() receive loop started")
     }
 
     private func handleUpdate(_ update: TDUpdate) async {
         switch update {
         case .authorizationState(let state):
+            Log.write("authorizationState → \(state)")
             if case .waitTdlibParameters = state {
+                Log.write("sending setTdlibParameters")
                 do {
                     try await client.setParameters(apiId: apiId, apiHash: apiHash)
+                    Log.write("setParameters sent ok")
                 } catch {
+                    Log.write("setParameters error: \(error)")
                     authState = .error(error.localizedDescription)
                 }
             }
             if case .waitEncryptionKey = state {
+                Log.write("sending checkDatabaseEncryptionKey")
                 await client.checkEncryptionKey()
             }
             applyAuthState(state)

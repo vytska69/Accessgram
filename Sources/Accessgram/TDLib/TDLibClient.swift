@@ -13,7 +13,7 @@ actor TDLibClient {
 
     init() {
         clientId = td_create_client_id()
-        // Suppress TDLib internal logs (fatal errors only)
+        Log.write("TDLibClient init, clientId=\(clientId)")
         _ = td_execute("{\"@type\":\"setLogVerbosityLevel\",\"new_verbosity_level\":0}")
     }
 
@@ -57,6 +57,7 @@ actor TDLibClient {
     }
 
     private func handleRaw(_ json: String) async {
+        Log.write("← \(json.prefix(300))")
         guard let data = json.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
         if let extra = obj["@extra"] as? String,
@@ -115,6 +116,7 @@ actor TDLibClient {
               let jsonStr = String(data: data, encoding: .utf8) else {
             throw TDError.encodingFailed
         }
+        Log.write("→ setTdlibParameters: \(jsonStr)")
         td_send(clientId, jsonStr)
     }
 }

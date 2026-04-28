@@ -19,7 +19,7 @@ enum AuthState: Equatable {
 final class AppViewModel {
     var authState: AuthState = .launching
     var errorMessage: String?
-    var chatListViewModel: ChatListViewModel?
+    let chatListViewModel: ChatListViewModel
 
     private let apiId: Int = 23618133
     private let apiHash: String = "421fd1c66ea61e98d93734fe729f6181"
@@ -29,12 +29,19 @@ final class AppViewModel {
     init() {
         Log.clear()
         Log.write("App init")
-        self.client = TDLibClient()
+        let c = TDLibClient()
+        self.client = c
+        self.chatListViewModel = ChatListViewModel(client: c)
         Task { await self.boot() }
     }
 
     func boot() async {
         Log.write("boot() start")
+        // Register chat list handler first so it catches updateNewChat from local cache.
+        let clvm = chatListViewModel
+        await client.addUpdateHandler { update in
+            await MainActor.run { clvm.handleUpdate(update) }
+        }
         await client.addUpdateHandler { [weak self] update in
             await self?.handleUpdate(update)
         }
@@ -74,7 +81,9 @@ final class AppViewModel {
         case .waitPassword:
             authState = .waitingForPassword
         case .ready:
+            if case .ready = authState { break }
             authState = .ready
+            Task { await chatListViewModel.loadInitial() }
         case .closed:
             authState = .launching
         }

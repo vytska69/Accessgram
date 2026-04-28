@@ -9,7 +9,7 @@ struct MainView: View {
 
     var body: some View {
         let selectedChat = selectedChatId.flatMap { id in
-            app.chatListViewModel?.chats.first { $0.id == id }
+            app.chatListViewModel.chats.first { $0.id == id }
         }
         NavigationSplitView {
             sidebarContent
@@ -32,29 +32,16 @@ struct MainView: View {
         .sheet(isPresented: $showNewChat) {
             NewChatView(selectedChatId: $selectedChatId).environment(app)
         }
-        .task {
-            guard app.chatListViewModel == nil else { return }
-            let vm = ChatListViewModel(client: app.client)
-            app.chatListViewModel = vm
-            await app.client.addUpdateHandler { update in
-                await MainActor.run { vm.handleUpdate(update) }
-            }
-            await vm.loadInitial()
-        }
+        .task { }
     }
 
     @ViewBuilder
     private var sidebarContent: some View {
-        if let vm = app.chatListViewModel {
-            ChatListView(
-                viewModel: vm,
-                selectedChatId: $selectedChatId,
-                onCompose: { showNewChat = true }
-            )
-        } else {
-            ProgressView("Loading chats…")
-                .accessibilityLabel("Loading conversations")
-        }
+        ChatListView(
+            viewModel: app.chatListViewModel,
+            selectedChatId: $selectedChatId,
+            onCompose: { showNewChat = true }
+        )
     }
 
     @ViewBuilder

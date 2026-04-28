@@ -48,6 +48,9 @@ final class AppViewModel {
                     authState = .error(error.localizedDescription)
                 }
             }
+            if case .waitEncryptionKey = state {
+                await client.checkEncryptionKey()
+            }
             applyAuthState(state)
         default:
             break
@@ -56,7 +59,7 @@ final class AppViewModel {
 
     private func applyAuthState(_ state: AuthorizationState) {
         switch state {
-        case .waitTdlibParameters:
+        case .waitTdlibParameters, .waitEncryptionKey:
             authState = .launching
         case .waitPhoneNumber:
             authState = .waitingForPhone

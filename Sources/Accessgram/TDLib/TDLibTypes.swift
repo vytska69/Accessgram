@@ -3,11 +3,12 @@ import Foundation
 // MARK: - Authorization State
 
 enum AuthorizationState: Equatable {
-    case waitTdlibParameters, waitPhoneNumber, waitCode, waitPassword, ready, closed
+    case waitTdlibParameters, waitEncryptionKey, waitPhoneNumber, waitCode, waitPassword, ready, closed
 
     init(type: String) {
         switch type {
         case "authorizationStateWaitTdlibParameters": self = .waitTdlibParameters
+        case "authorizationStateWaitEncryptionKey": self = .waitEncryptionKey
         case "authorizationStateWaitPhoneNumber": self = .waitPhoneNumber
         case "authorizationStateWaitCode": self = .waitCode
         case "authorizationStateWaitPassword": self = .waitPassword

@@ -83,6 +83,11 @@ actor TDLibClient {
 
     // MARK: - Setup
 
+    // Required by TDLib 1.7.x between waitTdlibParameters and waitPhoneNumber.
+    func checkEncryptionKey() {
+        td_send(clientId, "{\"@type\":\"checkDatabaseEncryptionKey\",\"encryption_key\":\"\"}")
+    }
+
     // Fire-and-forget: TDLib responds via updateAuthorizationState, not a direct reply.
     // Call this only in response to authorizationStateWaitTdlibParameters.
     func setParameters(apiId: Int, apiHash: String, useTestDc: Bool = false) throws {

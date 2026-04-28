@@ -21,20 +21,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache Homebrew packages
+      - name: Get TDLib master SHA
+        id: tdlib-sha
+        run: |
+          SHA=$(git ls-remote https://github.com/tdlib/td.git HEAD | awk '{print $1}' | cut -c1-10)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+          echo "TDLib master HEAD: $SHA"
+
+      - name: Cache TDLib build
+        id: cache-tdlib
         uses: actions/cache@v4
         with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /opt/homebrew/Cellar/tdlib
-          key: homebrew-tdlib-${{ runner.os }}-v2-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: homebrew-tdlib-${{ runner.os }}-v2-
+          path: /opt/tdlib
+          key: tdlib-master-${{ runner.os }}-arm64-${{ steps.tdlib-sha.outputs.sha }}
 
-      - name: Install TDLib
-        run: brew install tdlib && brew link --overwrite tdlib
+      - name: Install TDLib build dependencies
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
+        run: brew install cmake gperf openssl
 
-      - name: Export pkg-config path
-        run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"
+      - name: Build TDLib from master
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/tdlib/td /tmp/td
+          cmake -B /tmp/td-build -S /tmp/td \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/opt/tdlib \
+            -DTD_ENABLE_JNI=OFF \
+            -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)
+          cmake --build /tmp/td-build --target install -j$(sysctl -n hw.ncpu)
+
+      - name: Export TDLib paths
+        run: |
+          echo "PKG_CONFIG_PATH=/opt/tdlib/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "TDLIB_PREFIX=/opt/tdlib" >> "$GITHUB_ENV"
 
       - name: Cache Swift PM
         uses: actions/cache@v4
@@ -102,20 +121,38 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache Homebrew packages
+      - name: Get TDLib master SHA
+        id: tdlib-sha
+        run: |
+          SHA=$(git ls-remote https://github.com/tdlib/td.git HEAD | awk '{print $1}' | cut -c1-10)
+          echo "sha=$SHA" >> $GITHUB_OUTPUT
+
+      - name: Cache TDLib build
+        id: cache-tdlib
         uses: actions/cache@v4
         with:
-          path: |
-            ~/Library/Caches/Homebrew
-            /opt/homebrew/Cellar/tdlib
-          key: homebrew-tdlib-${{ runner.os }}-v2-${{ hashFiles('.github/workflows/ci.yml') }}
-          restore-keys: homebrew-tdlib-${{ runner.os }}-v2-
+          path: /opt/tdlib
+          key: tdlib-master-${{ runner.os }}-arm64-${{ steps.tdlib-sha.outputs.sha }}
 
-      - name: Install TDLib
-        run: brew install tdlib && brew link --overwrite tdlib
+      - name: Install TDLib build dependencies
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
+        run: brew install cmake gperf openssl
 
-      - name: Export pkg-config path
-        run: echo "PKG_CONFIG_PATH=$(brew --prefix)/lib/pkgconfig" >> "$GITHUB_ENV"
+      - name: Build TDLib from master
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 https://github.com/tdlib/td /tmp/td
+          cmake -B /tmp/td-build -S /tmp/td \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/opt/tdlib \
+            -DTD_ENABLE_JNI=OFF \
+            -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)
+          cmake --build /tmp/td-build --target install -j$(sysctl -n hw.ncpu)
+
+      - name: Export TDLib paths
+        run: |
+          echo "PKG_CONFIG_PATH=/opt/tdlib/lib/pkgconfig" >> "$GITHUB_ENV"
+          echo "TDLIB_PREFIX=/opt/tdlib" >> "$GITHUB_ENV"
 
       - name: Cache Swift PM
         uses: actions/cache@v4
@@ -134,6 +171,8 @@ jobs:
 
       - name: Assemble .app bundle
         run: bash Scripts/bundle.sh .build/release/Accessgram ${{ github.run_number }}
+        env:
+          TDLIB_PREFIX: /opt/tdlib
 
       - name: Create DMG
         run: |
@@ -153,7 +192,7 @@ jobs:
         run: |
           DATE=$(date -u "+%Y-%m-%d %H:%M UTC")
           BRANCH="${GITHUB_REF_NAME}"
-          TDLIB_VER=$(brew list --versions tdlib | awk '{print $2}')
+          TDLIB_SHA="${{ steps.tdlib-sha.outputs.sha }}"
           NOTES=/tmp/release-notes.md
 
           {
@@ -162,6 +201,7 @@ jobs:
             echo "**Branch:** \`${BRANCH}\`"
             echo "**Commit:** [\`${SHORT_SHA}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})"
             echo "**Build:** #${{ github.run_number }}"
+            echo "**TDLib:** master @ \`${TDLIB_SHA}\`"
             echo ""
             echo "### Installation"
             echo "1. Download \`${DMG_NAME}\` below"
@@ -170,12 +210,11 @@ jobs:
             echo ""
             echo "### What's included"
             echo "- Accessgram binary (macOS 14+, Apple Silicon)"
-            echo "- TDLib ${TDLIB_VER} embedded -- no separate install needed"
+            echo "- TDLib master embedded -- no separate install needed"
             echo ""
             echo "> Ad-hoc signed only. Notarisation requires an Apple Developer account."
           } > "${NOTES}"
 
-          # Delete release + its tag together; safe to fail on first ever run
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
 
           gh release create latest "${DMG_NAME}" \

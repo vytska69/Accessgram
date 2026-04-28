@@ -76,9 +76,10 @@ embed_dylib() {
 }
 
 # ── Locate libtdjson.dylib ───────────────────────────────────────────────────
-# Try the three standard Homebrew locations in order of preference.
+# TDLIB_PREFIX env var (set by CI when TDLib is built from source) takes priority.
 TDLIB_SRC=""
 for candidate in \
+    "${TDLIB_PREFIX:+$TDLIB_PREFIX/lib/libtdjson.dylib}" \
     "$BREW_PREFIX/lib/libtdjson.dylib" \
     "$BREW_PREFIX/opt/tdlib/lib/libtdjson.dylib" \
     "$(brew --cellar tdlib 2>/dev/null || true)"; do

@@ -16,6 +16,7 @@ enum TDUpdate {
     case chatPinnedMessageChanged(chatId: Int64, pinnedMessageId: Int64)
     case chatNotificationSettingsChanged(chatId: Int64, isMuted: Bool)
     case chatIsMarkedAsUnreadChanged(chatId: Int64, isMarked: Bool)
+    case updateChat(chatJSON: [String: Any])
     case messageReactionsChanged(chatId: Int64, messageId: Int64)
     case fileUpdated(fileId: Int32, localPath: String?)
     case userStatus(userId: Int64, status: UserStatus)
@@ -107,6 +108,9 @@ enum TDUpdate {
                 chatId: json["chat_id"] as? Int64 ?? 0,
                 isMarked: json["is_marked_as_unread"] as? Bool ?? false
             )
+        case "updateChat":
+            guard let chat = json["chat"] as? [String: Any] else { return nil }
+            return .updateChat(chatJSON: chat)
         default:
             return nil
         }

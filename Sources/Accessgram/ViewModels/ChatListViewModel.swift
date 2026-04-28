@@ -44,6 +44,9 @@ final class ChatListViewModel {
 
     func handleUpdate(_ update: TDUpdate) {
         switch update {
+        case .updateChat(let chatJSON):
+            addOrUpdate(from: chatJSON)
+
         case .newMessage(let msg):
             bringToTop(chatId: msg.chatId)
 

@@ -53,7 +53,7 @@ struct ForwardView: View {
         }
         .frame(width: 320, height: 420)
         .onAppear {
-            chats = app.chatListViewModel?.chats ?? []
+            chats = app.chatListViewModel.chats
         }
     }
 }

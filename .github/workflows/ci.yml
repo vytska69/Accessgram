@@ -48,7 +48,8 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=/opt/tdlib \
             -DTD_ENABLE_JNI=OFF \
             -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)
-          cmake --build /tmp/td-build --target install -j$(sysctl -n hw.ncpu)
+          cmake --build /tmp/td-build -j$(sysctl -n hw.ncpu)
+          sudo cmake --install /tmp/td-build
 
       - name: Export TDLib paths
         run: |
@@ -147,7 +148,8 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=/opt/tdlib \
             -DTD_ENABLE_JNI=OFF \
             -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)
-          cmake --build /tmp/td-build --target install -j$(sysctl -n hw.ncpu)
+          cmake --build /tmp/td-build -j$(sysctl -n hw.ncpu)
+          sudo cmake --install /tmp/td-build
 
       - name: Export TDLib paths
         run: |

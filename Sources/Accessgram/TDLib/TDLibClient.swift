@@ -104,7 +104,7 @@ actor TDLibClient {
         let sysVersion = "\(osVer.majorVersion).\(osVer.minorVersion).\(osVer.patchVersion)"
         let langCode = Locale.current.language.languageCode?.identifier ?? "en"
         let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-        let req = TDSetParametersPayload(
+        let inner = TDlibParametersPayload(
             useTestDc: useTestDc,
             databaseDirectory: dbPath,
             filesDirectory: filesPath,
@@ -114,6 +114,7 @@ actor TDLibClient {
             systemVersion: sysVersion,
             applicationVersion: appVersion
         )
+        let req = TDSetParametersPayload(parameters: inner)
         guard let data = try? JSONEncoder().encode(req),
               let jsonStr = String(data: data, encoding: .utf8) else {
             throw TDError.encodingFailed
@@ -123,14 +124,23 @@ actor TDLibClient {
     }
 }
 
-// MARK: - setTdlibParameters payload (Codable guarantees true/false for booleans)
+// MARK: - setTdlibParameters payload (nested format required by TDLib 1.8.x)
 
 private struct TDSetParametersPayload: Encodable {
     var type = "setTdlibParameters"
+    var parameters: TDlibParametersPayload
+
+    enum CodingKeys: String, CodingKey {
+        case type = "@type"
+        case parameters
+    }
+}
+
+private struct TDlibParametersPayload: Encodable {
+    var type = "tdlibParameters"
     var useTestDc: Bool
     var databaseDirectory: String
     var filesDirectory: String
-    var databaseEncryptionKey = ""
     var useFileDatabase = true
     var useChatInfoDatabase = true
     var useMessageDatabase = true
@@ -141,13 +151,14 @@ private struct TDSetParametersPayload: Encodable {
     var deviceModel = "Mac"
     var systemVersion: String
     var applicationVersion: String
+    var enableStorageOptimizer = true
+    var ignoreFileNames = false
 
     enum CodingKeys: String, CodingKey {
         case type = "@type"
         case useTestDc = "use_test_dc"
         case databaseDirectory = "database_directory"
         case filesDirectory = "files_directory"
-        case databaseEncryptionKey = "database_encryption_key"
         case useFileDatabase = "use_file_database"
         case useChatInfoDatabase = "use_chat_info_database"
         case useMessageDatabase = "use_message_database"
@@ -158,6 +169,8 @@ private struct TDSetParametersPayload: Encodable {
         case deviceModel = "device_model"
         case systemVersion = "system_version"
         case applicationVersion = "application_version"
+        case enableStorageOptimizer = "enable_storage_optimizer"
+        case ignoreFileNames = "ignore_file_names"
     }
 }
 

@@ -130,6 +130,7 @@ private struct TDSetParametersPayload: Encodable {
     var useTestDc: Bool
     var databaseDirectory: String
     var filesDirectory: String
+    var databaseEncryptionKey = ""
     var useFileDatabase = true
     var useChatInfoDatabase = true
     var useMessageDatabase = true
@@ -146,6 +147,7 @@ private struct TDSetParametersPayload: Encodable {
         case useTestDc = "use_test_dc"
         case databaseDirectory = "database_directory"
         case filesDirectory = "files_directory"
+        case databaseEncryptionKey = "database_encryption_key"
         case useFileDatabase = "use_file_database"
         case useChatInfoDatabase = "use_chat_info_database"
         case useMessageDatabase = "use_message_database"

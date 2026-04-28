@@ -7,9 +7,9 @@ struct AuthView: View {
     @FocusState private var fieldFocused: Bool
 
     var body: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: 24) {
             Image(systemName: "paperplane.fill")
-                .font(.system(size: 56))
+                .font(.system(size: 52))
                 .foregroundStyle(.blue)
                 .accessibilityHidden(true)
 
@@ -17,7 +17,7 @@ struct AuthView: View {
                 .font(.title.bold())
                 .accessibilityAddTraits(.isHeader)
 
-            Text("Enter your phone number with country code to receive a verification code.")
+            Text("Enter your phone number with country code.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
 
@@ -26,9 +26,9 @@ struct AuthView: View {
                 .font(.title3)
                 .focused($fieldFocused)
                 .onSubmit { submit() }
-                .frame(maxWidth: 280)
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel("Phone number")
-                .accessibilityHint("Enter your phone number including country code, for example plus 1 234 567 8900")
+                .accessibilityHint("Enter your phone number including country code")
                 .accessibilityValue(phoneNumber.isEmpty ? "empty" : phoneNumber)
 
             Button(action: submit) {
@@ -45,12 +45,12 @@ struct AuthView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .frame(maxWidth: 280)
+            .frame(maxWidth: .infinity)
             .disabled(phoneNumber.trimmingCharacters(in: .whitespaces).isEmpty || isBusy)
             .accessibilityLabel(isBusy ? "Sending verification code" : "Continue")
             .accessibilityHint("Sends a verification code to your phone")
         }
-        .padding(48)
+        .padding(40)
         .onAppear { fieldFocused = true }
     }
 

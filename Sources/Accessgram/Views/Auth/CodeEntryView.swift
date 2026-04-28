@@ -29,7 +29,7 @@ struct CodeEntryView: View {
                 .multilineTextAlignment(.center)
                 .focused($fieldFocused)
                 .onSubmit { submit() }
-                .frame(maxWidth: 200)
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel("Verification code")
                 .accessibilityHint("Enter the verification code sent to your phone")
                 .accessibilityValue(code.isEmpty ? "empty" : code.map { String($0) }.joined(separator: " "))
@@ -45,7 +45,7 @@ struct CodeEntryView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .frame(maxWidth: 200)
+            .frame(maxWidth: .infinity)
             .disabled(code.isEmpty || isBusy)
             .accessibilityLabel(isBusy ? "Verifying code" : "Verify code")
 
@@ -98,7 +98,7 @@ struct PasswordView: View {
                 .textFieldStyle(.roundedBorder)
                 .focused($fieldFocused)
                 .onSubmit { submit() }
-                .frame(maxWidth: 280)
+                .frame(maxWidth: .infinity)
                 .accessibilityLabel("Two-step verification password")
                 .accessibilityHint("Enter your Telegram two-step verification password")
 
@@ -113,7 +113,7 @@ struct PasswordView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .frame(maxWidth: 280)
+            .frame(maxWidth: .infinity)
             .disabled(password.isEmpty || isBusy)
             .accessibilityLabel(isBusy ? "Signing in" : "Continue")
         }

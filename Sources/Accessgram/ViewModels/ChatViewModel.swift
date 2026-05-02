@@ -49,6 +49,7 @@ final class ChatViewModel {
         do {
             let raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
             messages = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed()
+            await resolveSenderNames(for: &messages)
             let ids = messages.map { $0.id }
             await client.viewMessages(chatId: chat.id, ids: ids)
             await loadPinnedMessage()
@@ -63,7 +64,8 @@ final class ChatViewModel {
         defer { isLoadingMore = false }
         do {
             let raw = try await client.getChatHistory(chatId: chat.id, fromId: oldest.id, limit: 50)
-            let older = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed()
+            var older = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed() as [Message]
+            await resolveSenderNames(for: &older)
             if older.isEmpty {
                 hasMoreMessages = false
             } else {
@@ -140,9 +142,12 @@ final class ChatViewModel {
     func handleUpdate(_ update: TDUpdate) {
         switch update {
         case .newMessage(let tdMsg) where tdMsg.chatId == chat.id:
-            let msg = Message(tdMessage: tdMsg)
-            messages.append(msg)
-            announceNewMessage(msg)
+            var msg = Message(tdMessage: tdMsg)
+            Task {
+                await resolveSenderName(for: &msg)
+                messages.append(msg)
+                announceNewMessage(msg)
+            }
 
         case .messageSendSucceeded(let tdMsg, let oldId) where tdMsg.chatId == chat.id:
             let msg = Message(tdMessage: tdMsg)
@@ -189,6 +194,34 @@ final class ChatViewModel {
         if let i = messages.firstIndex(where: { $0.id == id }) {
             messages[i] = updated
         }
+    }
+
+    // MARK: - Sender Name Resolution
+
+    private func resolveSenderNames(for msgs: inout [Message]) async {
+        var nameCache: [Int64: String] = [:]
+        for i in msgs.indices {
+            guard !msgs[i].isOutgoing, case .user(let uid) = msgs[i].sender else { continue }
+            if let name = nameCache[uid] {
+                msgs[i].senderName = name
+            } else {
+                let name = await fetchUserName(id: uid)
+                nameCache[uid] = name
+                msgs[i].senderName = name
+            }
+        }
+    }
+
+    private func resolveSenderName(for msg: inout Message) async {
+        guard !msg.isOutgoing, case .user(let uid) = msg.sender else { return }
+        msg.senderName = await fetchUserName(id: uid)
+    }
+
+    private func fetchUserName(id: Int64) async -> String {
+        guard let user = try? await client.getUser(id: id) else { return "" }
+        let first = user["first_name"] as? String ?? ""
+        let last = user["last_name"] as? String ?? ""
+        return [first, last].filter { !$0.isEmpty }.joined(separator: " ")
     }
 
     // MARK: - VoiceOver

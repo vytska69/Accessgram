@@ -11,8 +11,11 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# ── Build & Test ──────────────────────────────────────────────────────────────
+# ── Shared TDLib cache step (reused by every job) ─────────────────────────────
+# Jobs restore the cache using the same key produced by tdlib-cache.yml.
+
 jobs:
+  # ── Build & Test ─────────────────────────────────────────────────────────────
   build-and-test:
     name: Build & Test (macOS)
     runs-on: macos-14
@@ -28,28 +31,19 @@ jobs:
           echo "sha=$SHA" >> $GITHUB_OUTPUT
           echo "TDLib master HEAD: $SHA"
 
-      - name: Cache TDLib build
+      - name: Restore TDLib cache
         id: cache-tdlib
         uses: actions/cache@v4
         with:
           path: /opt/tdlib
           key: tdlib-master-${{ runner.os }}-arm64-${{ steps.tdlib-sha.outputs.sha }}
 
-      - name: Install TDLib build dependencies
-        if: steps.cache-tdlib.outputs.cache-hit != 'true'
-        run: brew install cmake gperf openssl
-
-      - name: Build TDLib from master
+      - name: Fail fast if TDLib cache missing
         if: steps.cache-tdlib.outputs.cache-hit != 'true'
         run: |
-          git clone --depth 1 https://github.com/tdlib/td /tmp/td
-          cmake -B /tmp/td-build -S /tmp/td \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=/opt/tdlib \
-            -DTD_ENABLE_JNI=OFF \
-            -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)
-          cmake --build /tmp/td-build -j$(sysctl -n hw.ncpu)
-          sudo cmake --install /tmp/td-build
+          echo "::error::TDLib cache not found. The tdlib-cache workflow must complete first."
+          echo "::error::Trigger it manually via Actions → TDLib Cache → Run workflow."
+          exit 1
 
       - name: Export TDLib paths
         run: |
@@ -89,7 +83,7 @@ jobs:
           path: "*.log"
           retention-days: 7
 
-  # ── Lint ────────────────────────────────────────────────────────────────────
+  # ── Lint ─────────────────────────────────────────────────────────────────────
   lint:
     name: SwiftLint
     runs-on: macos-14
@@ -109,7 +103,7 @@ jobs:
       - name: Lint
         run: swiftlint lint --strict --reporter github-actions-logging
 
-  # ── Release ─────────────────────────────────────────────────────────────────
+  # ── Release ──────────────────────────────────────────────────────────────────
   release:
     name: Package DMG & Publish Release
     runs-on: macos-14
@@ -128,28 +122,11 @@ jobs:
           SHA=$(git ls-remote https://github.com/tdlib/td.git HEAD | awk '{print $1}' | cut -c1-10)
           echo "sha=$SHA" >> $GITHUB_OUTPUT
 
-      - name: Cache TDLib build
-        id: cache-tdlib
+      - name: Restore TDLib cache
         uses: actions/cache@v4
         with:
           path: /opt/tdlib
           key: tdlib-master-${{ runner.os }}-arm64-${{ steps.tdlib-sha.outputs.sha }}
-
-      - name: Install TDLib build dependencies
-        if: steps.cache-tdlib.outputs.cache-hit != 'true'
-        run: brew install cmake gperf openssl
-
-      - name: Build TDLib from master
-        if: steps.cache-tdlib.outputs.cache-hit != 'true'
-        run: |
-          git clone --depth 1 https://github.com/tdlib/td /tmp/td
-          cmake -B /tmp/td-build -S /tmp/td \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_INSTALL_PREFIX=/opt/tdlib \
-            -DTD_ENABLE_JNI=OFF \
-            -DOPENSSL_ROOT_DIR=$(brew --prefix openssl)
-          cmake --build /tmp/td-build -j$(sysctl -n hw.ncpu)
-          sudo cmake --install /tmp/td-build
 
       - name: Export TDLib paths
         run: |

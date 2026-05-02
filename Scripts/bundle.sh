@@ -138,8 +138,20 @@ done
 echo "  Embedded libraries:"
 for f in "$FRAMEWORKS"/*.dylib; do echo "    $(basename "$f")"; done
 
-# ── Ad-hoc codesign ──────────────────────────────────────────────────────────
-echo "  Signing (ad-hoc)"
-codesign --force --deep --sign - "$APP"
+# ── Codesign ─────────────────────────────────────────────────────────────────
+SIGNING_ID="${SIGNING_IDENTITY:--}"
+echo "  Signing with: $SIGNING_ID"
+
+if [ "$SIGNING_ID" = "-" ]; then
+    codesign --force --deep --sign - "$APP"
+else
+    # Developer ID: sign each component individually with hardened runtime,
+    # then sign the app bundle last (required for notarization).
+    for dylib in "$FRAMEWORKS"/*.dylib; do
+        codesign --force --sign "$SIGNING_ID" --options runtime "$dylib"
+    done
+    codesign --force --sign "$SIGNING_ID" --options runtime "$MACOS/Accessgram"
+    codesign --force --sign "$SIGNING_ID" --options runtime "$APP"
+fi
 
 echo "✅ $APP ready"

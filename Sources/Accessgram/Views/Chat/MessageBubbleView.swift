@@ -15,48 +15,60 @@ struct MessageBubbleView: View {
     private var isOutgoing: Bool { message.isOutgoing }
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            if isOutgoing { Spacer(minLength: 60) }
+        if case .service(let text) = message.content {
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .italic()
+                .multilineTextAlignment(.center)
+                .padding(.vertical, 2)
+                .padding(.horizontal, 20)
+                .frame(maxWidth: .infinity)
+                .accessibilityLabel(text)
+        } else {
+            HStack(alignment: .bottom, spacing: 8) {
+                if isOutgoing { Spacer(minLength: 60) }
 
-            VStack(alignment: isOutgoing ? .trailing : .leading, spacing: 4) {
-                if !isOutgoing, !message.senderName.isEmpty {
-                    Text(message.senderName)
-                        .font(.caption.bold())
-                        .foregroundStyle(Color.accentColor)
-                        .padding(.leading, 4)
-                        .accessibilityHidden(true)
+                VStack(alignment: isOutgoing ? .trailing : .leading, spacing: 4) {
+                    if !isOutgoing, !message.senderName.isEmpty {
+                        Text(message.senderName)
+                            .font(.caption.bold())
+                            .foregroundStyle(Color.accentColor)
+                            .padding(.leading, 4)
+                            .accessibilityHidden(true)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        if let fwd = message.forwardOriginName {
+                            forwardHeader(from: fwd)
+                        }
+                        if let quoteText = message.replyQuoteText {
+                            replyQuote(text: quoteText)
+                        }
+                        contentView
+                        if !message.reactions.isEmpty {
+                            reactionsRow
+                        }
+                        timeRow
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(bubbleColor)
+                    .clipShape(BubbleShape(isOutgoing: isOutgoing))
+                    .contextMenu { contextMenuItems }
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
-                    if let fwd = message.forwardOriginName {
-                        forwardHeader(from: fwd)
-                    }
-                    if let quoteText = message.replyQuoteText {
-                        replyQuote(text: quoteText)
-                    }
-                    contentView
-                    if !message.reactions.isEmpty {
-                        reactionsRow
-                    }
-                    timeRow
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(bubbleColor)
-                .clipShape(BubbleShape(isOutgoing: isOutgoing))
-                .contextMenu { contextMenuItems }
+                if !isOutgoing { Spacer(minLength: 60) }
             }
-
-            if !isOutgoing { Spacer(minLength: 60) }
+            .padding(.vertical, 2)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(message.fullAccessibilityLabel)
+            .accessibilityAddTraits(.isStaticText)
+            .accessibilityAction(named: "Reply") { onReply() }
+            .accessibilityAction(named: "Edit") { if message.isOutgoing { onEdit() } }
+            .accessibilityAction(named: "Forward") { if message.canBeForwarded { onForward() } }
+            .accessibilityAction(named: "Delete") { if message.canBeDeleted { onDelete() } }
         }
-        .padding(.vertical, 2)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(message.fullAccessibilityLabel)
-        .accessibilityAddTraits(.isStaticText)
-        .accessibilityAction(named: "Reply") { onReply() }
-        .accessibilityAction(named: "Edit") { if message.isOutgoing { onEdit() } }
-        .accessibilityAction(named: "Forward") { if message.canBeForwarded { onForward() } }
-        .accessibilityAction(named: "Delete") { if message.canBeDeleted { onDelete() } }
     }
 
     // MARK: - Forward Header
@@ -147,8 +159,10 @@ struct MessageBubbleView: View {
             Label(q, systemImage: "chart.bar.xaxis")
         case .videoNote:
             Label("Video message", systemImage: "video.circle.fill")
-        case .unknown(let t):
-            Text("[\(t)]").font(.body).foregroundStyle(.secondary)
+        case .animatedEmoji(let emoji):
+            Text(emoji).font(.system(size: 48))
+        case .unknown:
+            Text("Unsupported message").font(.body).foregroundStyle(.secondary).italic()
         }
     }
 

@@ -8,6 +8,8 @@ struct ChatView: View {
     @State private var viewModel: ChatViewModel
     @State private var showProfile = false
     @AccessibilityFocusState private var inputFocused: Bool
+    @State private var pendingScrollAnchor: Int64? = nil
+    @State private var scrollToBottomTrigger = 0
 
     init(chat: Chat, client: TDLibClient) {
         self.chat = chat
@@ -112,7 +114,18 @@ struct ChatView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }
-            .onChange(of: viewModel.messages.count) { _, _ in
+            .onChange(of: viewModel.messages.last?.id) { _, newId in
+                if let newId {
+                    withAnimation { proxy.scrollTo(newId, anchor: .bottom) }
+                }
+            }
+            .onChange(of: viewModel.messages.first?.id) { _, _ in
+                if let anchor = pendingScrollAnchor {
+                    proxy.scrollTo(anchor, anchor: .top)
+                    pendingScrollAnchor = nil
+                }
+            }
+            .onChange(of: scrollToBottomTrigger) { _, _ in
                 if let last = viewModel.messages.last {
                     withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
                 }
@@ -130,6 +143,7 @@ struct ChatView: View {
     private var loadMoreButton: some View {
         if viewModel.hasMoreMessages && !viewModel.showSearch {
             Button {
+                pendingScrollAnchor = viewModel.messages.first?.id
                 Task { await viewModel.loadOlderMessages() }
             } label: {
                 if viewModel.isLoadingMore {
@@ -199,6 +213,12 @@ struct ChatView: View {
             }
             .accessibilityLabel("Focus message input")
             .keyboardShortcut("n", modifiers: .command)
+        }
+        ToolbarItem(placement: .primaryAction) {
+            Button { scrollToBottomTrigger += 1 } label: {
+                Image(systemName: "arrow.down.to.line")
+            }
+            .accessibilityLabel("Jump to latest message")
         }
         ToolbarItem(placement: .primaryAction) {
             Button { viewModel.showSearch.toggle() } label: {

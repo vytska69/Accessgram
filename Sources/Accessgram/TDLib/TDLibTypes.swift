@@ -77,6 +77,8 @@ enum MessageContent {
     case location(latitude: Double, longitude: Double)
     case contact(firstName: String, lastName: String, phone: String)
     case poll(question: String)
+    case animatedEmoji(emoji: String)
+    case service(text: String)
     case unknown(type: String)
 
     init(json: [String: Any]) {
@@ -133,6 +135,33 @@ enum MessageContent {
         case "messagePoll":
             let q = ((json["poll"] as? [String: Any])?["question"] as? [String: Any])?["text"] as? String ?? ""
             self = .poll(question: q)
+        case "messageAnimatedEmoji":
+            let e = (json["animated_emoji"] as? [String: Any]).flatMap {
+                ($0["sticker"] as? [String: Any])?["emoji"] as? String
+            } ?? json["emoji"] as? String ?? "?"
+            self = .animatedEmoji(emoji: e)
+        case "messageChatChangeTitle":
+            self = .service(text: "Changed the title to \"\(json["title"] as? String ?? "")\"")
+        case "messageChatAddMembers":
+            self = .service(text: "Members were added")
+        case "messageChatDeleteMember":
+            self = .service(text: "Left the group")
+        case "messageChatJoinByLink", "messageChatJoinByRequest":
+            self = .service(text: "Joined the group")
+        case "messagePinMessage":
+            self = .service(text: "Pinned a message")
+        case "messageBasicGroupChatCreate", "messageSupergroupChatCreate":
+            self = .service(text: "Created the group")
+        case "messageChatUpgradeFrom", "messageChatUpgradeTo":
+            self = .service(text: "Group was upgraded")
+        case "messageScreenshotTaken":
+            self = .service(text: "Took a screenshot")
+        case "messageChatSetMessageAutoDeleteTime":
+            self = .service(text: "Auto-delete timer changed")
+        case "messageGiftedPremium", "messagePremiumGiftCode":
+            self = .service(text: "Gifted Telegram Premium")
+        case "messageExpiredPhoto", "messageExpiredVideo", "messageExpiredVideoNote", "messageExpiredVoiceNote":
+            self = .service(text: "Self-destructed media")
         default:
             self = .unknown(type: json["@type"] as? String ?? "unknown")
         }
@@ -157,6 +186,8 @@ enum MessageContent {
         case .contact(let f, let l, let p):
             return "Contact: \([f, l].filter { !$0.isEmpty }.joined(separator: " ")), \(p)"
         case .poll(let q): return "Poll: \(q)"
+        case .animatedEmoji(let e): return "\(e) sticker"
+        case .service(let t): return t
         case .unknown(let t): return "Unsupported message (\(t))"
         }
     }
@@ -174,6 +205,8 @@ enum MessageContent {
         case .location: return "📍 Location"
         case .contact: return "👤 Contact"
         case .poll(let q): return "📊 \(q)"
+        case .animatedEmoji(let e): return e
+        case .service(let t): return t
         case .unknown: return "Message"
         }
     }

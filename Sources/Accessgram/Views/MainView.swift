@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum MainTab: String, CaseIterable {
-    case messages, contacts, settings
+    case messages, contacts
 }
 
 @MainActor
@@ -10,6 +10,7 @@ struct MainView: View {
     @State private var activeTab: MainTab = .messages
     @State private var selectedChatId: Int64?
     @State private var showNewChat = false
+    @State private var showSettings = false
 
     private var totalUnread: Int {
         app.chatListViewModel.chats.reduce(0) { $0 + $1.unreadCount }
@@ -27,6 +28,9 @@ struct MainView: View {
         }
         .sheet(isPresented: $showNewChat) {
             NewChatView(selectedChatId: $selectedChatId).environment(app)
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView().environment(app).frame(width: 480, height: 620)
         }
         .onReceive(
             NotificationCenter.default.publisher(for: NotificationService.openChatNotification)
@@ -64,15 +68,30 @@ struct MainView: View {
                 icon: "person.2.fill",
                 label: "Contacts"
             )
-            tabButton(
-                tab: .settings,
-                icon: "gearshape.fill",
-                label: "Settings"
-            )
+            settingsButton
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
         .background(.bar)
+    }
+
+    private var settingsButton: some View {
+        Button { showSettings = true } label: {
+            VStack(spacing: 3) {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 18, weight: .regular))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 28, height: 28)
+                Text("Settings")
+                    .font(.system(size: 10, weight: .regular))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Settings")
+        .keyboardShortcut("3", modifiers: .command)
     }
 
     @ViewBuilder
@@ -108,7 +127,7 @@ struct MainView: View {
         .buttonStyle(.plain)
         .accessibilityLabel(badge > 0 ? "\(label), \(badge) unread" : label)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
-        .keyboardShortcut(tab == .messages ? "1" : tab == .contacts ? "2" : "3", modifiers: .command)
+        .keyboardShortcut(tab == .messages ? "1" : "2", modifiers: .command)
     }
 
     // MARK: - Tab Content
@@ -124,9 +143,6 @@ struct MainView: View {
             )
         case .contacts:
             ContactsView(selectedChatId: $selectedChatId)
-                .environment(app)
-        case .settings:
-            SettingsView()
                 .environment(app)
         }
     }
@@ -155,13 +171,6 @@ struct MainView: View {
                 description: Text("Select a contact to start chatting")
             )
             .accessibilityLabel("Select a contact from the sidebar to open a conversation.")
-        case .settings:
-            ContentUnavailableView(
-                "Settings",
-                systemImage: "gearshape",
-                description: Text("Adjust your Telegram settings in the sidebar")
-            )
-            .accessibilityLabel("Adjust your settings in the sidebar.")
         }
     }
 }

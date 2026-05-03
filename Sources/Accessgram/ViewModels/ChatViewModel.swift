@@ -47,9 +47,14 @@ final class ChatViewModel {
         isLoading = true
         defer { isLoading = false }
         do {
-            let raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
+            var raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
+            if raw.isEmpty {
+                try? await Task.sleep(nanoseconds: 700_000_000)
+                raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
+            }
             let loaded = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed() as [Message]
             messages = await resolveSenderNames(for: loaded)
+            hasMoreMessages = raw.count >= 50
             let ids = messages.map { $0.id }
             await client.viewMessages(chatId: chat.id, ids: ids)
             await loadPinnedMessage()

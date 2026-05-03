@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct SettingsView: View {
     @Environment(AppViewModel.self) private var app
     @State private var vm: SettingsViewModel?

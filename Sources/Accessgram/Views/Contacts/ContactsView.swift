@@ -140,7 +140,7 @@ struct ContactsView: View {
                 if let id = chat["id"] as? Int64 {
                     selectedChatId = id
                     // Make sure it's in the chat list
-                    app.chatListViewModel.addOrUpdate(from: chat)
+                    await app.chatListViewModel.addOrUpdate(from: chat)
                 }
             }
         }

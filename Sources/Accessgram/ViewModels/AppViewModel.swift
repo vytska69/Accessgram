@@ -1,5 +1,5 @@
-import Foundation
 import AppKit
+import Foundation
 import Observation
 
 // MARK: - Auth State
@@ -104,14 +104,14 @@ final class AppViewModel {
         guard let chat, !chat.isMuted else { return }
 
         let title = chat.title
-        var body  = msg.content.previewText
+        var body = msg.content.previewText
 
         // Prepend sender name in group chats
         if chat.type.isGroup || chat.type.isChannel, case .user(let uid) = msg.sender {
             if let user = try? await client.getUser(id: uid) {
                 let first = user["first_name"] as? String ?? ""
                 let last  = user["last_name"]  as? String ?? ""
-                let name  = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                let name = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
                 if !name.isEmpty { body = "\(name): \(body)" }
             }
         }

@@ -69,7 +69,11 @@ struct ContactsView: View {
             ContentUnavailableView(
                 searchQuery.isEmpty ? "No Contacts" : "No Results",
                 systemImage: "person.2",
-                description: Text(searchQuery.isEmpty ? "Your contacts will appear here" : "No contacts match \"\(searchQuery)\"")
+                description: Text(
+                    searchQuery.isEmpty
+                        ? "Your contacts will appear here"
+                        : "No contacts match \"\(searchQuery)\""
+                )
             )
         } else {
             List(filtered) { contact in
@@ -111,12 +115,12 @@ struct ContactsView: View {
                 group.addTask {
                     guard let user = try? await app.client.getUser(id: id) else { return nil }
                     let first = user["first_name"] as? String ?? ""
-                    let last  = user["last_name"]  as? String ?? ""
-                    let name  = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                    let last = user["last_name"] as? String ?? ""
+                    let name = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
                     guard !name.isEmpty else { return nil }
-                    let unames  = (user["usernames"] as? [String: Any])?["active_usernames"] as? [String]
+                    let unames = (user["usernames"] as? [String: Any])?["active_usernames"] as? [String]
                     let username = unames?.first ?? ""
-                    let phone   = user["phone_number"] as? String ?? ""
+                    let phone = user["phone_number"] as? String ?? ""
                     return ContactEntry(id: id, name: name, username: username, phone: phone)
                 }
             }

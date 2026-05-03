@@ -4,16 +4,16 @@ import Observation
 @Observable
 @MainActor
 final class SettingsViewModel {
-    var myName   = ""
+    var myName = ""
     var myHandle = ""
-    var myPhone  = ""
-    var myBio    = ""
+    var myPhone = ""
+    var myBio = ""
 
     var notifSettings: [NotificationScope: ScopeNotificationSettings] = [:]
     var privacyValues: [PrivacySetting: PrivacyValue] = [:]
     var sessions: [TGSession] = []
 
-    var isLoading  = false
+    var isLoading = false
     var errorMessage: String?
 
     private let client: TDLibClient
@@ -37,12 +37,12 @@ final class SettingsViewModel {
 
     private func loadMe() async {
         guard let me = try? await client.getMe() else { return }
-        myName   = [me["first_name"] as? String, me["last_name"] as? String]
-                       .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
+        myName = [me["first_name"] as? String, me["last_name"] as? String]
+            .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " ")
         myHandle = (me["usernames"] as? [String: Any]).flatMap {
             ($0["active_usernames"] as? [String])?.first
         }.map { "@\($0)" } ?? ""
-        myPhone  = me["phone_number"] as? String ?? ""
+        myPhone = me["phone_number"] as? String ?? ""
         if let id = me["id"] as? Int64,
            let full = try? await client.getUserFullInfo(userId: id) {
             myBio = (full["bio"] as? [String: Any])?["text"] as? String ?? ""
@@ -74,9 +74,9 @@ final class SettingsViewModel {
 
     func setNotification(scope: NotificationScope, muted: Bool? = nil, preview: Bool? = nil, sound: Bool? = nil) async {
         guard var s = notifSettings[scope] else { return }
-        if let v = muted   { s.muted        = v }
-        if let v = preview { s.showPreview  = v }
-        if let v = sound   { s.soundEnabled = v }
+        if let v = muted { s.muted = v }
+        if let v = preview { s.showPreview = v }
+        if let v = sound { s.soundEnabled = v }
         notifSettings[scope] = s
         do {
             try await client.setScopeNotificationSettings(

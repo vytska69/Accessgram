@@ -4,13 +4,13 @@ import Foundation
 
 enum NotificationScope: String, CaseIterable {
     case privateChats = "notificationSettingsScopePrivateChats"
-    case groupChats   = "notificationSettingsScopeGroupChats"
+    case groupChats = "notificationSettingsScopeGroupChats"
     case channelChats = "notificationSettingsScopeChannelChats"
 
     var label: String {
         switch self {
         case .privateChats: return "Private Chats"
-        case .groupChats:   return "Groups"
+        case .groupChats: return "Groups"
         case .channelChats: return "Channels"
         }
     }
@@ -22,8 +22,8 @@ struct ScopeNotificationSettings {
     var soundEnabled: Bool
 
     init(json: [String: Any]) {
-        muted        = (json["mute_for"] as? Int ?? 0) > 0
-        showPreview  = json["show_preview"] as? Bool ?? true
+        muted = (json["mute_for"] as? Int ?? 0) > 0
+        showPreview = json["show_preview"] as? Bool ?? true
         soundEnabled = (json["sound_id"] as? Int ?? 1) != 0
     }
 }
@@ -32,31 +32,31 @@ struct ScopeNotificationSettings {
 
 enum PrivacyValue: String, CaseIterable, Identifiable {
     case everybody = "userPrivacySettingRuleAllowAll"
-    case contacts  = "userPrivacySettingRuleAllowContacts"
-    case nobody    = "userPrivacySettingRuleRestrictAll"
+    case contacts = "userPrivacySettingRuleAllowContacts"
+    case nobody = "userPrivacySettingRuleRestrictAll"
 
     var id: String { rawValue }
     var label: String {
         switch self {
         case .everybody: return "Everybody"
-        case .contacts:  return "My Contacts"
-        case .nobody:    return "Nobody"
+        case .contacts: return "My Contacts"
+        case .nobody: return "Nobody"
         }
     }
 }
 
 enum PrivacySetting: String {
-    case lastSeen     = "userPrivacySettingShowStatus"
+    case lastSeen = "userPrivacySettingShowStatus"
     case profilePhoto = "userPrivacySettingShowProfilePhoto"
-    case calls        = "userPrivacySettingAllowCalls"
+    case calls = "userPrivacySettingAllowCalls"
     case groupInvites = "userPrivacySettingAllowChatInvites"
-    case forwards     = "userPrivacySettingShowLinkInForwardedMessages"
+    case forwards = "userPrivacySettingShowLinkInForwardedMessages"
 
     var label: String {
         switch self {
-        case .lastSeen:     return "Last Seen & Online"
+        case .lastSeen: return "Last Seen & Online"
         case .profilePhoto: return "Profile Photo"
-        case .calls:        return "Calls"
+        case .calls: return "Calls"
         case .groupInvites: return "Group & Channel Invites"
         case .forwards:     return "Forwarded Messages"
         }
@@ -77,18 +77,18 @@ struct TGSession: Identifiable {
 
     init?(json: [String: Any]) {
         guard let id = json["id"] as? Int64 else { return nil }
-        self.id            = id
-        isCurrent          = json["is_current"] as? Bool ?? false
-        deviceModel        = json["device_model"] as? String ?? ""
-        platform           = json["platform"] as? String ?? ""
-        appName            = json["application_name"] as? String ?? ""
-        appVersion         = json["application_version"] as? String ?? ""
-        country            = json["country"] as? String ?? ""
-        lastActiveDate     = json["last_active_date"] as? Int ?? 0
+        self.id = id
+        isCurrent = json["is_current"] as? Bool ?? false
+        deviceModel = json["device_model"] as? String ?? ""
+        platform = json["platform"] as? String ?? ""
+        appName = json["application_name"] as? String ?? ""
+        appVersion = json["application_version"] as? String ?? ""
+        country = json["country"] as? String ?? ""
+        lastActiveDate = json["last_active_date"] as? Int ?? 0
     }
 
     var displayName: String { "\(appName) \(appVersion)" }
-    var deviceInfo: String  { [deviceModel, platform].filter { !$0.isEmpty }.joined(separator: ", ") }
+    var deviceInfo: String { [deviceModel, platform].filter { !$0.isEmpty }.joined(separator: ", ") }
 
     var lastActiveString: String {
         let date = Date(timeIntervalSince1970: TimeInterval(lastActiveDate))
@@ -111,7 +111,9 @@ extension TDLibClient {
         return ScopeNotificationSettings(json: resp)
     }
 
-    func setScopeNotificationSettings(scope: NotificationScope, muted: Bool, showPreview: Bool, soundEnabled: Bool) async throws {
+    func setScopeNotificationSettings(
+        scope: NotificationScope, muted: Bool, showPreview: Bool, soundEnabled: Bool
+    ) async throws {
         _ = try await sendRaw("setScopeNotificationSettings", params: [
             "scope": ["@type": scope.rawValue],
             "notification_settings": [
@@ -148,7 +150,7 @@ extension TDLibClient {
 
     func getActiveSessions() async throws -> [TGSession] {
         let resp = try await sendRaw("getActiveSessions")
-        let arr  = resp["sessions"] as? [[String: Any]] ?? []
+        let arr = resp["sessions"] as? [[String: Any]] ?? []
         return arr.compactMap { TGSession(json: $0) }
     }
 

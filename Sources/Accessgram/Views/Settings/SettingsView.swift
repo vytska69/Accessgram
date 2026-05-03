@@ -50,7 +50,11 @@ struct SettingsView: View {
             Button("Log Out", role: .destructive) { Task { await app.logOut() } }
             Button("Cancel", role: .cancel) {}
         }
-        .confirmationDialog("Terminate all other sessions?", isPresented: $showTerminateAllConfirm, titleVisibility: .visible) {
+        .confirmationDialog(
+            "Terminate all other sessions?",
+            isPresented: $showTerminateAllConfirm,
+            titleVisibility: .visible
+        ) {
             Button("Terminate All", role: .destructive) { Task { await vm.terminateAllOther() } }
             Button("Cancel", role: .cancel) {}
         }

@@ -1,5 +1,5 @@
-import UserNotifications
 import AppKit
+import UserNotifications
 
 final class NotificationService: NSObject, UNUserNotificationCenterDelegate, @unchecked Sendable {
 
@@ -22,7 +22,7 @@ final class NotificationService: NSObject, UNUserNotificationCenterDelegate, @un
     func send(chatId: Int64, title: String, body: String) {
         let content = UNMutableNotificationContent()
         content.title = title
-        content.body  = body.isEmpty ? " " : body
+        content.body = body.isEmpty ? " " : body
         content.sound = .default
         content.userInfo = ["chat_id": chatId]
 

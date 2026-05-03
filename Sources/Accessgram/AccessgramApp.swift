@@ -1,5 +1,5 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 
 // Keeps the app alive in the background when the window is closed.
 final class AppDelegate: NSObject, NSApplicationDelegate {

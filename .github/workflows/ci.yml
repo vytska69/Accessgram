@@ -11,9 +11,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# ── Shared TDLib cache step (reused by every job) ─────────────────────────────
-# Jobs restore the cache using the same key produced by tdlib-cache.yml.
-
 jobs:
   # ── Build & Test ─────────────────────────────────────────────────────────────
   build-and-test:
@@ -31,7 +28,7 @@ jobs:
           echo "sha=$SHA" >> $GITHUB_OUTPUT
           echo "TDLib master HEAD: $SHA"
 
-      - name: Restore TDLib cache
+      - name: Cache TDLib build
         id: cache-tdlib
         uses: actions/cache@v4
         with:
@@ -131,19 +128,19 @@ jobs:
           SHA=$(git ls-remote https://github.com/tdlib/td.git HEAD | awk '{print $1}' | cut -c1-10)
           echo "sha=$SHA" >> $GITHUB_OUTPUT
 
-      - name: Restore TDLib cache
-        id: cache-tdlib-release
+      - name: Cache TDLib build
+        id: cache-tdlib
         uses: actions/cache@v4
         with:
           path: /opt/tdlib
           key: tdlib-master-${{ runner.os }}-arm64-${{ steps.tdlib-sha.outputs.sha }}
 
       - name: Install TDLib build dependencies
-        if: steps.cache-tdlib-release.outputs.cache-hit != 'true'
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
         run: brew install cmake gperf openssl
 
       - name: Build TDLib from master
-        if: steps.cache-tdlib-release.outputs.cache-hit != 'true'
+        if: steps.cache-tdlib.outputs.cache-hit != 'true'
         run: |
           git clone --depth 1 https://github.com/tdlib/td /tmp/td
           cmake -B /tmp/td-build -S /tmp/td \
@@ -174,29 +171,6 @@ jobs:
         env:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
-      - name: Import signing certificate
-        env:
-          CERTIFICATE_P12: ${{ secrets.APPLE_CERTIFICATE_P12 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-        run: |
-          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain"
-          KEYCHAIN_PASSWORD=$(uuidgen)
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          echo "$CERTIFICATE_P12" | base64 --decode > /tmp/cert.p12
-          security import /tmp/cert.p12 -k "$KEYCHAIN_PATH" \
-            -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
-          security list-keychains -d user -s "$KEYCHAIN_PATH" \
-            $(security list-keychains -d user | tr -d '"')
-          security set-key-partition-list \
-            -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          rm /tmp/cert.p12
-          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" \
-            | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
-          echo "SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
-          echo "Found identity: $IDENTITY"
-
       - name: Assemble .app bundle
         run: bash Scripts/bundle.sh .build/release/Accessgram ${{ github.run_number }}
         env:
@@ -208,19 +182,6 @@ jobs:
           bash Scripts/make-dmg.sh "$SHORT_SHA"
           echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
           echo "DMG_NAME=Accessgram-${SHORT_SHA}.dmg" >> "$GITHUB_ENV"
-
-      - name: Notarize DMG
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          xcrun notarytool submit "${DMG_NAME}" \
-            --apple-id "$APPLE_ID" \
-            --password "$APPLE_APP_PASSWORD" \
-            --team-id "$APPLE_TEAM_ID" \
-            --wait
-          xcrun stapler staple "${DMG_NAME}"
 
       - name: Verify DMG exists
         run: |
@@ -247,11 +208,13 @@ jobs:
             echo "### Installation"
             echo "1. Download \`${DMG_NAME}\` below"
             echo "2. Open the DMG and drag **Accessgram** to **Applications**"
+            echo "3. First launch: right-click → **Open** (bypasses Gatekeeper)"
             echo ""
             echo "### What's included"
             echo "- Accessgram binary (macOS 14+, Apple Silicon)"
             echo "- TDLib master embedded -- no separate install needed"
-            echo "- Signed and notarized by Apple"
+            echo ""
+            echo "> Ad-hoc signed only."
           } > "${NOTES}"
 
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true

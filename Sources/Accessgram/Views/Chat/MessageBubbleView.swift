@@ -313,14 +313,18 @@ private struct BubbleShape: Shape {
         let cornerSize = CGSize(width: r, height: r)
         if isOutgoing {
             let adjusted = CGRect(
-                x: rect.minX, y: rect.minY,
-                width: rect.width - tail, height: rect.height
+                x: rect.minX,
+                y: rect.minY,
+                width: rect.width - tail,
+                height: rect.height
             )
             path.addRoundedRect(in: adjusted, cornerSize: cornerSize)
         } else {
             let adjusted = CGRect(
-                x: rect.minX + tail, y: rect.minY,
-                width: rect.width - tail, height: rect.height
+                x: rect.minX + tail,
+                y: rect.minY,
+                width: rect.width - tail,
+                height: rect.height
             )
             path.addRoundedRect(in: adjusted, cornerSize: cornerSize)
         }

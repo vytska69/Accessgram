@@ -112,7 +112,10 @@ extension TDLibClient {
     }
 
     func setScopeNotificationSettings(
-        scope: NotificationScope, muted: Bool, showPreview: Bool, soundEnabled: Bool
+        scope: NotificationScope,
+        muted: Bool,
+        showPreview: Bool,
+        soundEnabled: Bool
     ) async throws {
         _ = try await sendRaw("setScopeNotificationSettings", params: [
             "scope": ["@type": scope.rawValue],

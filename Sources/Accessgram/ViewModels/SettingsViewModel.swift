@@ -80,7 +80,10 @@ final class SettingsViewModel {
         notifSettings[scope] = s
         do {
             try await client.setScopeNotificationSettings(
-                scope: scope, muted: s.muted, showPreview: s.showPreview, soundEnabled: s.soundEnabled
+                scope: scope,
+                muted: s.muted,
+                showPreview: s.showPreview,
+                soundEnabled: s.soundEnabled
             )
         } catch {
             errorMessage = error.localizedDescription

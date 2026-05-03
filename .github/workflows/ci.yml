@@ -121,6 +121,26 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Bump version
+        id: version
+        run: |
+          CURRENT=$(cat VERSION)
+          NEW=$(python3 -c "v=float('$CURRENT'); print(f'{v+0.1:.1f}')")
+          echo "$NEW" > VERSION
+          echo "version=$NEW" >> $GITHUB_OUTPUT
+          echo "Bumping $CURRENT → $NEW"
+
+      - name: Commit version bump
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git commit -m "chore: bump version to ${{ steps.version.outputs.version }} [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
 
       - name: Get TDLib master SHA
         id: tdlib-sha
@@ -172,16 +192,20 @@ jobs:
           DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
       - name: Assemble .app bundle
-        run: bash Scripts/bundle.sh .build/release/Accessgram ${{ github.run_number }}
+        run: bash Scripts/bundle.sh .build/release/Accessgram ${{ github.run_number }} ${{ steps.version.outputs.version }}
         env:
           TDLIB_PREFIX: /opt/tdlib
 
       - name: Create DMG
         run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DATETIME=$(date -u "+%Y-%m-%d-%H-%M")
           SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
-          bash Scripts/make-dmg.sh "$SHORT_SHA"
+          DMG_BASE="Accessgram-${VERSION}-${DATETIME}"
+          bash Scripts/make-dmg.sh "$DMG_BASE"
+          echo "DMG_NAME=${DMG_BASE}.dmg" >> "$GITHUB_ENV"
           echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"
-          echo "DMG_NAME=Accessgram-${SHORT_SHA}.dmg" >> "$GITHUB_ENV"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Verify DMG exists
         run: |
@@ -198,7 +222,7 @@ jobs:
           NOTES=/tmp/release-notes.md
 
           {
-            echo "## Accessgram Dev Build"
+            echo "## Accessgram ${VERSION}"
             echo ""
             echo "**Branch:** \`${BRANCH}\`"
             echo "**Commit:** [\`${SHORT_SHA}\`](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})"
@@ -220,6 +244,6 @@ jobs:
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
 
           gh release create latest "${DMG_NAME}" \
-            --title "Dev Build - ${DATE}" \
+            --title "Accessgram ${VERSION} — ${DATE}" \
             --prerelease \
             --notes-file "${NOTES}"

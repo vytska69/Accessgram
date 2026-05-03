@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 # bundle.sh – assembles Accessgram.app from a compiled binary and TDLib.
-# Usage: ./Scripts/bundle.sh <binary_path> <build_number>
+# Usage: ./Scripts/bundle.sh <binary_path> <build_number> [version]
 set -euo pipefail
 
 BINARY="${1:-.build/release/Accessgram}"
 BUILD_NUMBER="${2:-0}"
+VERSION="${3:-}"
 APP="Accessgram.app"
 MACOS="$APP/Contents/MacOS"
 FRAMEWORKS="$APP/Contents/Frameworks"
 RESOURCES="$APP/Contents/Resources"
 BREW_PREFIX="$(brew --prefix)"
 
-echo "▶ Assembling $APP (build $BUILD_NUMBER)"
+echo "▶ Assembling $APP (build $BUILD_NUMBER${VERSION:+, version $VERSION})"
 rm -rf "$APP"
 mkdir -p "$MACOS" "$FRAMEWORKS" "$RESOURCES"
 
@@ -24,6 +25,11 @@ cp "Sources/Accessgram/Resources/Info.plist" "$APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy \
     -c "Set :CFBundleVersion $BUILD_NUMBER" \
     "$APP/Contents/Info.plist"
+if [ -n "$VERSION" ]; then
+    /usr/libexec/PlistBuddy \
+        -c "Set :CFBundleShortVersionString $VERSION" \
+        "$APP/Contents/Info.plist"
+fi
 
 # ── Pure-bash symlink resolver (no python3 / GNU coreutils required) ─────────
 resolve_path() {

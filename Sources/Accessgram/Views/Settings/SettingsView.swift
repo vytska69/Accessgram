@@ -12,7 +12,7 @@ struct SettingsView: View {
                 loadedView(vm: vm)
             } else {
                 ProgressView("Loading…")
-                    .frame(width: 420, height: 520)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .task {
@@ -27,16 +27,6 @@ struct SettingsView: View {
     @ViewBuilder
     private func loadedView(vm: SettingsViewModel) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Header
-            Text("Settings")
-                .font(.title2.bold())
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 12)
-                .accessibilityAddTraits(.isHeader)
-
-            Divider()
-
             List {
                 profileSection(vm: vm)
                 notificationsSection(vm: vm)
@@ -47,7 +37,7 @@ struct SettingsView: View {
             }
             .listStyle(.inset)
         }
-        .frame(width: 420, height: 620)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .alert("Error", isPresented: Binding(
             get: { vm.errorMessage != nil },
             set: { if !$0 { vm.errorMessage = nil } }

@@ -28,6 +28,14 @@ struct MainView: View {
         .sheet(isPresented: $showNewChat) {
             NewChatView(selectedChatId: $selectedChatId).environment(app)
         }
+        .onReceive(
+            NotificationCenter.default.publisher(for: NotificationService.openChatNotification)
+        ) { note in
+            if let chatId = note.userInfo?["chat_id"] as? Int64 {
+                activeTab = .messages
+                selectedChatId = chatId
+            }
+        }
         .task { }
     }
 

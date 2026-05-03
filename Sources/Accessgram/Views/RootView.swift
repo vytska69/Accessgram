@@ -32,10 +32,13 @@ struct RootView: View {
                     .frame(width: 420, height: 300)
             }
         }
-        .alert("Error", isPresented: Binding(
-            get: { app.errorMessage != nil },
-            set: { if !$0 { app.errorMessage = nil } }
-        )) {
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { app.errorMessage != nil },
+                set: { if !$0 { app.errorMessage = nil } }
+            )
+        ) {
             Button("OK") { app.errorMessage = nil }
         } message: {
             Text(app.errorMessage ?? "")

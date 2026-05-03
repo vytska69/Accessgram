@@ -38,10 +38,13 @@ struct SettingsView: View {
             .listStyle(.inset)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .alert("Error", isPresented: Binding(
-            get: { vm.errorMessage != nil },
-            set: { if !$0 { vm.errorMessage = nil } }
-        )) {
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { if !$0 { vm.errorMessage = nil } }
+            )
+        ) {
             Button("OK") { vm.errorMessage = nil }
         } message: {
             Text(vm.errorMessage ?? "")

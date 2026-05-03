@@ -91,10 +91,13 @@ struct ContactsView: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel([contact.name,
-                    contact.username.isEmpty ? "" : "@\(contact.username)",
-                    contact.phone.isEmpty ? "" : "+\(contact.phone)"
-                ].filter { !$0.isEmpty }.joined(separator: ", "))
+                .accessibilityLabel(
+                    [contact.name,
+                     contact.username.isEmpty ? "" : "@\(contact.username)",
+                     contact.phone.isEmpty ? "" : "+\(contact.phone)"]
+                    .filter { !$0.isEmpty }
+                    .joined(separator: ", ")
+                )
                 .accessibilityHint("Open conversation")
             }
             .listStyle(.plain)

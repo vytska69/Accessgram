@@ -53,16 +53,22 @@ struct MainView: View {
 
     private var tabBar: some View {
         HStack(spacing: 0) {
-            tabButton(tab: .messages,
-                      icon: "bubble.left.and.bubble.right.fill",
-                      label: "Messages",
-                      badge: totalUnread)
-            tabButton(tab: .contacts,
-                      icon: "person.2.fill",
-                      label: "Contacts")
-            tabButton(tab: .settings,
-                      icon: "gearshape.fill",
-                      label: "Settings")
+            tabButton(
+                tab: .messages,
+                icon: "bubble.left.and.bubble.right.fill",
+                label: "Messages",
+                badge: totalUnread
+            )
+            tabButton(
+                tab: .contacts,
+                icon: "person.2.fill",
+                label: "Contacts"
+            )
+            tabButton(
+                tab: .settings,
+                icon: "gearshape.fill",
+                label: "Settings"
+            )
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)

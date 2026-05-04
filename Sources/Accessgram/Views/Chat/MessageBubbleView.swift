@@ -49,7 +49,7 @@ struct MessageBubbleView: View {
                             forwardHeader(from: fwd)
                         }
                         if let quoteText = message.replyQuoteText {
-                            replyQuote(text: quoteText)
+                            replyQuote(messageId: message.replyToMessageId, text: quoteText)
                         }
                         contentView
                         if !message.reactions.isEmpty {
@@ -93,15 +93,25 @@ struct MessageBubbleView: View {
 
     // MARK: - Reply Quote
 
-    private func replyQuote(text: String) -> some View {
-        HStack(spacing: 6) {
+    private func replyQuote(messageId: Int64?, text: String) -> some View {
+        let replyMsg = messageId.flatMap { id in viewModel.messages.first { $0.id == id } }
+        let senderName = replyMsg.map { $0.isOutgoing ? "You" : $0.senderName }
+        return HStack(spacing: 6) {
             Rectangle()
                 .fill(Color.accentColor)
                 .frame(width: 2)
-            Text(text)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
+            VStack(alignment: .leading, spacing: 1) {
+                if let name = senderName, !name.isEmpty {
+                    Text(name)
+                        .font(.caption.bold())
+                        .foregroundStyle(Color.accentColor)
+                        .lineLimit(1)
+                }
+                Text(text)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
         }
         .padding(.vertical, 2)
     }
@@ -206,6 +216,17 @@ struct MessageBubbleView: View {
             Label("Video message", systemImage: "video.circle.fill")
         case .animatedEmoji(let emoji):
             Text(emoji).font(.system(size: 48))
+        case .game(let title):
+            Label(title, systemImage: "gamecontroller.fill")
+                .font(.body)
+                .accessibilityLabel("Game: \(title)")
+        case .invoice(let title, let description):
+            VStack(alignment: .leading, spacing: 2) {
+                Label(title, systemImage: "cart.fill").font(.headline)
+                if !description.isEmpty {
+                    Text(description).font(.caption).foregroundStyle(.secondary)
+                }
+            }
         case .service:
             EmptyView()
         case .unknown:

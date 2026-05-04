@@ -164,8 +164,8 @@ Sources/
 
 ### Missing message types
 - [x] GIF / animation (`messageAnimation`)
-- [ ] Invoice / payment messages
-- [ ] Game messages
+- [x] Invoice / payment messages
+- [x] Game messages
 - [x] Dice messages
 - [ ] Geo live location
 

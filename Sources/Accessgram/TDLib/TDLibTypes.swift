@@ -80,6 +80,8 @@ enum MessageContent {
     case animation(caption: String, duration: Int, file: TDFile?)
     case dice(emoji: String, value: Int)
     case animatedEmoji(emoji: String)
+    case game(title: String)
+    case invoice(title: String, description: String)
     case service(text: String)
     case unknown(type: String)
 
@@ -172,6 +174,14 @@ enum MessageContent {
                 ($0["sticker"] as? [String: Any])?["emoji"] as? String
             } ?? json["emoji"] as? String ?? "?"
             return .animatedEmoji(emoji: e)
+        case "messageGame":
+            let game = json["game"] as? [String: Any] ?? [:]
+            return .game(title: game["title"] as? String ?? "Game")
+        case "messageInvoice":
+            return .invoice(
+                title: json["title"] as? String ?? "Invoice",
+                description: json["description"] as? String ?? ""
+            )
         default:
             return nil
         }
@@ -230,6 +240,8 @@ enum MessageContent {
         case .dice(let emoji, let value):
             return value > 0 ? "Dice \(emoji), result: \(value)" : "Dice \(emoji)"
         case .animatedEmoji(let e): return "\(e) sticker"
+        case .game(let title): return "Game: \(title)"
+        case .invoice(let title, _): return "Invoice: \(title)"
         case .service(let t): return t
         case .unknown(let t): return "Unsupported message (\(t))"
         }
@@ -251,6 +263,8 @@ enum MessageContent {
         case .animation: return "🎞 GIF"
         case .dice(let e, _): return "\(e) Dice"
         case .animatedEmoji(let e): return e
+        case .game(let title): return "🎮 \(title)"
+        case .invoice(let title, _): return "🧾 \(title)"
         case .service(let t): return t
         case .unknown: return "Message"
         }

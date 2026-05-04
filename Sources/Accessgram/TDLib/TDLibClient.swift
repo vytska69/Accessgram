@@ -42,6 +42,16 @@ actor TDLibClient {
         updateHandlers.append(handler)
     }
 
+    func clearUpdateHandlers() {
+        updateHandlers = []
+    }
+
+    func resetAndStart() {
+        receiveTask?.cancel()
+        receiveTask = nil
+        start()
+    }
+
     // MARK: - Raw Send/Receive
 
     func sendRaw(_ type: String, params: [String: Any] = [:]) async throws -> [String: Any] {

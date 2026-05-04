@@ -39,6 +39,7 @@ final class AppViewModel {
 
     func boot() async {
         Log.write("boot() start")
+        await client.clearUpdateHandlers()
         // Register chat list handler first so it catches updateNewChat from local cache.
         let clvm = chatListViewModel
         await client.addUpdateHandler { update in
@@ -50,7 +51,7 @@ final class AppViewModel {
         await client.addUpdateHandler { [weak self] update in
             await self?.handleNotification(update)
         }
-        await client.start()
+        await client.resetAndStart()
         Log.write("boot() receive loop started")
     }
 

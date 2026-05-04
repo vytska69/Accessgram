@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationService.shared.requestPermission()
         backgroundActivity = ProcessInfo.processInfo.beginActivity(
-            [.background, .userInitiatedAllowingIdleSystemSleep],
+            options: [.background, .userInitiatedAllowingIdleSystemSleep],
             reason: "Receiving Telegram messages"
         )
     }

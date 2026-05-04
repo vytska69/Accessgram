@@ -30,7 +30,7 @@ struct ChatView: View {
         .onDrop(of: [.fileURL], isTargeted: $isDraggedOver) { providers in
             guard let provider = providers.first else { return false }
             _ = provider.loadObject(ofClass: NSURL.self) { nsurl, _ in
-                guard let url = nsurl as URL? else { return }
+                guard let url = nsurl as? URL else { return }
                 DispatchQueue.main.async { Task { await viewModel.sendAttachment(url: url) } }
             }
             return true

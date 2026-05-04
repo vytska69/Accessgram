@@ -206,6 +206,8 @@ struct MessageBubbleView: View {
             Label("Video message", systemImage: "video.circle.fill")
         case .animatedEmoji(let emoji):
             Text(emoji).font(.system(size: 48))
+        case .service:
+            EmptyView()
         case .unknown:
             Text("Unsupported message").font(.body).foregroundStyle(.secondary).italic()
         }

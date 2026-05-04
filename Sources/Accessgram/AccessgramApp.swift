@@ -3,8 +3,15 @@ import SwiftUI
 
 // Keeps the app alive in the background when the window is closed.
 final class AppDelegate: NSObject, NSApplicationDelegate {
+    // Held for the app lifetime — releasing it re-enables App Nap.
+    private var backgroundActivity: NSObjectProtocol?
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationService.shared.requestPermission()
+        backgroundActivity = ProcessInfo.processInfo.beginActivity(
+            [.background, .userInitiatedAllowingIdleSystemSleep],
+            reason: "Receiving Telegram messages"
+        )
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

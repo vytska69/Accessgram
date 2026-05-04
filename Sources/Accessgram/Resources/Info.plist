@@ -26,5 +26,9 @@
     <true/>
     <key>NSAccessibilityUsageDescription</key>
     <string>Accessgram uses accessibility APIs to provide full VoiceOver support.</string>
+    <key>NSAppSleepDisabled</key>
+    <true/>
+    <key>LSBackgroundOnly</key>
+    <false/>
 </dict>
 </plist>

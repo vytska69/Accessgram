@@ -103,20 +103,26 @@ final class AppViewModel {
         let chat = chatListViewModel.chats.first { $0.id == msg.chatId }
         guard let chat, !chat.isMuted else { return }
 
+        let chatId = msg.chatId
         let title = chat.title
-        var body = msg.content.previewText
+        let baseBody = msg.content.previewText
+        let needsSenderName = chat.type.isGroup || chat.type.isChannel
+        let sender = msg.sender
+        let tdClient = client
 
-        // Prepend sender name in group chats
-        if chat.type.isGroup || chat.type.isChannel, case .user(let uid) = msg.sender {
-            if let user = try? await client.getUser(id: uid) {
-                let first = user["first_name"] as? String ?? ""
-                let last  = user["last_name"]  as? String ?? ""
-                let name = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
-                if !name.isEmpty { body = "\(name): \(body)" }
+        // Resolve sender name off the main actor so we don't block update processing.
+        Task.detached {
+            var body = baseBody
+            if needsSenderName, case .user(let uid) = sender {
+                if let user = try? await tdClient.getUser(id: uid) {
+                    let first = user["first_name"] as? String ?? ""
+                    let last  = user["last_name"]  as? String ?? ""
+                    let name = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+                    if !name.isEmpty { body = "\(name): \(body)" }
+                }
             }
+            NotificationService.shared.send(chatId: chatId, title: title, body: body)
         }
-
-        NotificationService.shared.send(chatId: msg.chatId, title: title, body: body)
     }
 
     // MARK: - Auth Actions

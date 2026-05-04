@@ -167,14 +167,14 @@ Sources/
 - [x] Invoice / payment messages
 - [x] Game messages
 - [x] Dice messages
-- [ ] Geo live location
+- [x] Geo live location
 
 ### Missing chat features
 - [x] Video playback (tap on video opens in Quick Look or default player)
 - [ ] Image gallery / swipe between photos in the same chat
 - [ ] Inline reply preview loads the full message from the API (currently shows quote text only)
 - [ ] Message scheduling
-- [ ] Slow-mode indicator for groups
+- [x] Slow-mode indicator for groups
 - [x] Supergroup/channel member list
 - [x] Message link copying (supergroups/channels)
 - [ ] Rich text formatting in composer (bold, italic, code)

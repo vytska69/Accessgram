@@ -197,6 +197,31 @@ struct MessageBubbleView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(String(format: "Location %.5f, %.5f. Open in Maps.", lat, lon))
+        case .liveLocation(let lat, let lon):
+            Button {
+                let q = "\(lat),\(lon)"
+                if let url = URL(string: "maps://?ll=\(q)&q=Location") {
+                    NSWorkspace.shared.open(url)
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Label(String(format: "%.5f, %.5f", lat, lon), systemImage: "location.fill")
+                        Text("LIVE")
+                            .font(.caption2.bold())
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color.green.opacity(0.2))
+                            .foregroundStyle(.green)
+                            .clipShape(Capsule())
+                    }
+                    Text("Open in Maps")
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(String(format: "Live location %.5f, %.5f. Open in Maps.", lat, lon))
         case .contact(let first, let last, let phone):
             contactView(first: first, last: last, phone: phone)
         case .poll(let q):

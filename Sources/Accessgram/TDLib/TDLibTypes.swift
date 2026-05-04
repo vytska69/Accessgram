@@ -75,6 +75,7 @@ enum MessageContent {
     case voice(duration: Int, file: TDFile?)
     case videoNote(duration: Int, file: TDFile?)
     case location(latitude: Double, longitude: Double)
+    case liveLocation(latitude: Double, longitude: Double)
     case contact(firstName: String, lastName: String, phone: String)
     case poll(question: String)
     case animation(caption: String, duration: Int, file: TDFile?)
@@ -148,10 +149,10 @@ enum MessageContent {
             return .videoNote(duration: vvn["duration"] as? Int ?? 0, file: vvnFile)
         case "messageLocation":
             let loc = json["location"] as? [String: Any] ?? [:]
-            return .location(
-                latitude: loc["latitude"] as? Double ?? 0,
-                longitude: loc["longitude"] as? Double ?? 0
-            )
+            let lat = loc["latitude"] as? Double ?? 0
+            let lon = loc["longitude"] as? Double ?? 0
+            let livePeriod = json["live_period"] as? Int ?? 0
+            return livePeriod > 0 ? .liveLocation(latitude: lat, longitude: lon) : .location(latitude: lat, longitude: lon)
         case "messageContact":
             let c = json["contact"] as? [String: Any] ?? [:]
             return .contact(
@@ -232,6 +233,7 @@ enum MessageContent {
         case .voice(let dur, _): return "Voice message, \(tdFormatDuration(dur))"
         case .videoNote(let dur, _): return "Video message, \(tdFormatDuration(dur))"
         case .location(let lat, let lon): return String(format: "Location: %.4f, %.4f", lat, lon)
+        case .liveLocation(let lat, let lon): return String(format: "Live location: %.4f, %.4f", lat, lon)
         case .contact(let f, let l, let p):
             return "Contact: \([f, l].filter { !$0.isEmpty }.joined(separator: " ")), \(p)"
         case .poll(let q): return "Poll: \(q)"
@@ -258,6 +260,7 @@ enum MessageContent {
         case .voice: return "🎤 Voice message"
         case .videoNote: return "⭕ Video message"
         case .location: return "📍 Location"
+        case .liveLocation: return "📍 Live Location"
         case .contact: return "👤 Contact"
         case .poll(let q): return "📊 \(q)"
         case .animation: return "🎞 GIF"

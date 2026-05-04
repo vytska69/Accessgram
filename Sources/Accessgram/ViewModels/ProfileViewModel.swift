@@ -17,6 +17,7 @@ final class ProfileViewModel {
     var isBlocked = false
     var errorMessage: String?
 
+    var slowModeDelay: Int?
     var members: [ChatMember] = []
     var isLoadingMembers = false
     var hasMoreMembers = false
@@ -72,6 +73,8 @@ final class ProfileViewModel {
         if let full = try? await client.getSupergroupFullInfo(supergroupId: id) {
             description = (full["description"] as? String) ?? ""
             memberCount = full["member_count"] as? Int
+            let delay = full["slow_mode_delay"] as? Int ?? 0
+            slowModeDelay = delay > 0 ? delay : nil
         }
     }
 

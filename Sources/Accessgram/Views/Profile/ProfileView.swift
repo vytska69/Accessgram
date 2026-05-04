@@ -129,6 +129,9 @@ struct ProfileView: View {
                     profileRow(icon: "person.2", label: "Members", value: "\(count)")
                 }
             }
+            if let delay = vm.slowModeDelay {
+                profileRow(icon: "timer", label: "Slow Mode", value: formatSlowMode(delay))
+            }
             profileRow(icon: "bubble.left", label: "Type", value: chat.type.typeLabel)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -176,6 +179,12 @@ struct ProfileView: View {
                 .accessibilityLabel("Leave \(chat.title)")
             }
         }
+    }
+
+    private func formatSlowMode(_ seconds: Int) -> String {
+        if seconds < 60 { return "\(seconds)s" }
+        if seconds < 3600 { return "\(seconds / 60)m" }
+        return "\(seconds / 3600)h"
     }
 
     private func profileRow(icon: String, label: String, value: String) -> some View {

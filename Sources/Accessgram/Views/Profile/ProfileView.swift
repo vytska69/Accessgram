@@ -140,17 +140,29 @@ struct ProfileView: View {
     @ViewBuilder
     private func actionsSection(vm: ProfileViewModel) -> some View {
         VStack(spacing: 8) {
-            Button {
-                Task { await vm.toggleMute() }
-            } label: {
-                Label(
-                    vm.isMuted ? "Unmute" : "Mute",
-                    systemImage: vm.isMuted ? "bell" : "bell.slash"
-                )
-                .frame(maxWidth: .infinity)
+            if vm.isMuted {
+                Button {
+                    Task { await vm.unmute() }
+                } label: {
+                    Label("Unmute", systemImage: "bell")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Unmute chat")
+            } else {
+                Menu {
+                    Button("Mute for 1 Hour") { Task { await vm.muteFor(seconds: 3_600) } }
+                    Button("Mute for 8 Hours") { Task { await vm.muteFor(seconds: 28_800) } }
+                    Button("Mute for 1 Week") { Task { await vm.muteFor(seconds: 604_800) } }
+                    Divider()
+                    Button("Mute Forever") { Task { await vm.muteFor(seconds: 2_147_483_647) } }
+                } label: {
+                    Label("Mute…", systemImage: "bell.slash")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Mute chat, opens duration picker")
             }
-            .buttonStyle(.bordered)
-            .accessibilityLabel(vm.isMuted ? "Unmute chat" : "Mute chat")
 
             if case .private = chat.type {
                 Button {

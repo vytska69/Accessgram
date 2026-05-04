@@ -140,11 +140,19 @@ final class ProfileViewModel {
 
     // MARK: - Actions
 
-    func toggleMute() async {
-        let muteFor = isMuted ? 0 : 2_147_483_647
+    func muteFor(seconds: Int) async {
         do {
-            try await client.muteChat(chatId: chatId, muteFor: muteFor)
-            isMuted.toggle()
+            try await client.muteChat(chatId: chatId, muteFor: seconds)
+            isMuted = true
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func unmute() async {
+        do {
+            try await client.muteChat(chatId: chatId, muteFor: 0)
+            isMuted = false
         } catch {
             errorMessage = error.localizedDescription
         }

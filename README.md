@@ -157,9 +157,9 @@ Sources/
 
 ### Bugs / polish
 - [ ] Initial chat open sometimes loads fewer than 50 messages on a cold cache — retry helps but a proper loading indicator while TDLib fetches from the server would be better
-- [ ] Long messages don't have a "show more / show less" toggle
+- [x] Long messages don't have a "show more / show less" toggle
 - [ ] No in-app error recovery for TDLib initialization failures beyond "Try Again"
-- [ ] Message timestamps don't show full date for older messages (only time)
+- [x] Message timestamps don't show full date for older messages (only time)
 - [ ] Sticker rendering is emoji text-only — no animated or WebP stickers
 
 ### Missing message types
@@ -170,7 +170,7 @@ Sources/
 - [ ] Geo live location
 
 ### Missing chat features
-- [ ] Video playback (tap on video opens in Quick Look or default player)
+- [x] Video playback (tap on video opens in Quick Look or default player)
 - [ ] Image gallery / swipe between photos in the same chat
 - [ ] Inline reply preview loads the full message from the API (currently shows quote text only)
 - [ ] Message scheduling

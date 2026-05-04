@@ -21,9 +21,26 @@ struct Message: Identifiable, Hashable {
     // MARK: - Computed
 
     var timeString: String {
-        let fmt = DateFormatter()
-        fmt.timeStyle = .short
-        return fmt.string(from: date)
+        let cal = Calendar.current
+        if cal.isDateInToday(date) {
+            let fmt = DateFormatter()
+            fmt.timeStyle = .short
+            return fmt.string(from: date)
+        } else if cal.isDateInYesterday(date) {
+            let fmt = DateFormatter()
+            fmt.timeStyle = .short
+            return "Yesterday, \(fmt.string(from: date))"
+        } else {
+            let fmt = DateFormatter()
+            let days = cal.dateComponents([.day], from: date, to: Date()).day ?? 0
+            if days < 7 {
+                fmt.dateFormat = "EEE, HH:mm"
+            } else {
+                fmt.dateStyle = .short
+                fmt.timeStyle = .short
+            }
+            return fmt.string(from: date)
+        }
     }
 
     var accessibilityPreview: String {

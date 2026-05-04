@@ -11,6 +11,9 @@ struct MessageBubbleView: View {
     let onDelete: () -> Void
 
     @State private var photoPath: String?
+    @State private var videoPath: String?
+    @State private var isDownloadingVideo = false
+    @State private var isExpanded = false
 
     private var isOutgoing: Bool { message.isOutgoing }
 
@@ -138,11 +141,25 @@ struct MessageBubbleView: View {
     private var contentView: some View {
         switch message.content {
         case .text(let t):
-            Text(t).font(.body).textSelection(.enabled)
+            let isLong = t.count > 500 || t.components(separatedBy: "\n").count > 10
+            VStack(alignment: .leading, spacing: 4) {
+                Text(t)
+                    .font(.body)
+                    .textSelection(.enabled)
+                    .lineLimit(isExpanded || !isLong ? nil : 10)
+                if isLong {
+                    Button(isExpanded ? "Show less" : "Show more") {
+                        isExpanded.toggle()
+                    }
+                    .font(.caption)
+                    .foregroundStyle(Color.accentColor)
+                    .buttonStyle(.plain)
+                }
+            }
         case .photo(let caption, let hasSpoiler, let file):
             photoView(file: file, caption: caption, hasSpoiler: hasSpoiler)
-        case .video(let caption, let duration, _):
-            videoView(caption: caption, duration: duration)
+        case .video(let caption, let duration, let file):
+            videoView(caption: caption, duration: duration, file: file)
         case .voice(let duration, let file):
             BubbleAudioPlayerView(file: file, duration: duration, viewModel: viewModel)
         case .audio(let title, let performer, let duration, let file):
@@ -200,19 +217,59 @@ struct MessageBubbleView: View {
 
     // MARK: - Video
 
-    private func videoView(caption: String, duration: Int) -> some View {
+    private func videoView(caption: String, duration: Int, file: TDFile?) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             ZStack {
-                RoundedRectangle(cornerRadius: 8).fill(Color.secondary.opacity(0.2))
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.secondary.opacity(0.2))
                     .frame(width: 240, height: 160)
-                Image(systemName: "play.circle.fill").font(.system(size: 44)).foregroundStyle(.white)
-                Text(tdFormatDuration(duration)).font(.caption.monospacedDigit())
-                    .padding(4).background(.black.opacity(0.6))
-                    .clipShape(RoundedRectangle(cornerRadius: 4)).foregroundStyle(.white)
+                videoControls(file: file, duration: duration)
+                Text(tdFormatDuration(duration))
+                    .font(.caption.monospacedDigit())
+                    .padding(4)
+                    .background(.black.opacity(0.6))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                     .padding(6)
             }
             if !caption.isEmpty { Text(caption).font(.body) }
+        }
+    }
+
+    @ViewBuilder
+    private func videoControls(file: TDFile?, duration: Int) -> some View {
+        if let path = videoPath ?? file?.localPath {
+            Button {
+                viewModel.openFile(at: path)
+            } label: {
+                Image(systemName: "play.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Play video, \(tdFormatDuration(duration))")
+        } else if isDownloadingVideo {
+            ProgressView().tint(.white)
+        } else if let file {
+            Button {
+                Task {
+                    isDownloadingVideo = true
+                    await viewModel.downloadFile(file)
+                    videoPath = viewModel.localPath(for: file)
+                    isDownloadingVideo = false
+                }
+            } label: {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 44))
+                    .foregroundStyle(.white)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Download video, \(tdFormatDuration(duration))")
+        } else {
+            Image(systemName: "play.circle.fill")
+                .font(.system(size: 44))
+                .foregroundStyle(.white.opacity(0.4))
         }
     }
 

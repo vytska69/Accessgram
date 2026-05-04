@@ -84,22 +84,33 @@ enum MessageContent {
     case unknown(type: String)
 
     init(json: [String: Any]) {
-        switch json["@type"] as? String ?? "" {
+        let type = json["@type"] as? String ?? ""
+        if let media = MessageContent.parseBasicMedia(json: json, type: type) {
+            self = media
+        } else if let media = MessageContent.parseRichMedia(json: json, type: type) {
+            self = media
+        } else {
+            self = MessageContent.parseService(json: json, type: type)
+        }
+    }
+
+    private static func parseBasicMedia(json: [String: Any], type: String) -> MessageContent? {
+        switch type {
         case "messageText":
-            self = .text((json["text"] as? [String: Any])?["text"] as? String ?? "")
+            return .text((json["text"] as? [String: Any])?["text"] as? String ?? "")
         case "messagePhoto":
             let cap = ((json["caption"] as? [String: Any])?["text"] as? String) ?? ""
             let sizes = (json["photo"] as? [String: Any])?["sizes"] as? [[String: Any]] ?? []
             let photoFile = (sizes.last?["photo"] as? [String: Any]).map { TDFile(json: $0) }
-            self = .photo(caption: cap, hasSpoiler: json["has_spoiler"] as? Bool ?? false, file: photoFile)
+            return .photo(caption: cap, hasSpoiler: json["has_spoiler"] as? Bool ?? false, file: photoFile)
         case "messageVideo":
             let vid = json["video"] as? [String: Any] ?? [:]
             let vidCap = ((json["caption"] as? [String: Any])?["text"] as? String) ?? ""
             let vidFile = (vid["video"] as? [String: Any]).map { TDFile(json: $0) }
-            self = .video(caption: vidCap, duration: vid["duration"] as? Int ?? 0, file: vidFile)
+            return .video(caption: vidCap, duration: vid["duration"] as? Int ?? 0, file: vidFile)
         case "messageAudio":
             let audio = json["audio"] as? [String: Any] ?? [:]
-            self = .audio(
+            return .audio(
                 title: audio["title"] as? String ?? "",
                 performer: audio["performer"] as? String ?? "",
                 duration: audio["duration"] as? Int ?? 0,
@@ -108,76 +119,90 @@ enum MessageContent {
         case "messageDocument":
             let doc = json["document"] as? [String: Any] ?? [:]
             let docCap = ((json["caption"] as? [String: Any])?["text"] as? String) ?? ""
-            self = .document(
+            return .document(
                 fileName: doc["file_name"] as? String ?? "File",
                 caption: docCap,
                 mimeType: doc["mime_type"] as? String ?? "",
                 file: (doc["document"] as? [String: Any]).map { TDFile(json: $0) }
             )
+        default:
+            return nil
+        }
+    }
+
+    private static func parseRichMedia(json: [String: Any], type: String) -> MessageContent? {
+        switch type {
         case "messageSticker":
             let stickerObj = json["sticker"] as? [String: Any] ?? [:]
             let stickerFile = (stickerObj["sticker"] as? [String: Any]).map { TDFile(json: $0) }
-            self = .sticker(emoji: stickerObj["emoji"] as? String ?? "", file: stickerFile)
+            return .sticker(emoji: stickerObj["emoji"] as? String ?? "", file: stickerFile)
         case "messageVoiceNote":
             let vn = json["voice_note"] as? [String: Any] ?? [:]
             let vnFile = (vn["voice"] as? [String: Any]).map { TDFile(json: $0) }
-            self = .voice(duration: vn["duration"] as? Int ?? 0, file: vnFile)
+            return .voice(duration: vn["duration"] as? Int ?? 0, file: vnFile)
         case "messageVideoNote":
             let vvn = json["video_note"] as? [String: Any] ?? [:]
             let vvnFile = (vvn["video"] as? [String: Any]).map { TDFile(json: $0) }
-            self = .videoNote(duration: vvn["duration"] as? Int ?? 0, file: vvnFile)
+            return .videoNote(duration: vvn["duration"] as? Int ?? 0, file: vvnFile)
         case "messageLocation":
             let loc = json["location"] as? [String: Any] ?? [:]
-            self = .location(latitude: loc["latitude"] as? Double ?? 0, longitude: loc["longitude"] as? Double ?? 0)
+            return .location(
+                latitude: loc["latitude"] as? Double ?? 0,
+                longitude: loc["longitude"] as? Double ?? 0
+            )
         case "messageContact":
             let c = json["contact"] as? [String: Any] ?? [:]
-            self = .contact(
+            return .contact(
                 firstName: c["first_name"] as? String ?? "",
                 lastName: c["last_name"] as? String ?? "",
                 phone: c["phone_number"] as? String ?? ""
             )
         case "messagePoll":
             let q = ((json["poll"] as? [String: Any])?["question"] as? [String: Any])?["text"] as? String ?? ""
-            self = .poll(question: q)
+            return .poll(question: q)
         case "messageAnimation":
             let anim = json["animation"] as? [String: Any] ?? [:]
             let animCap = ((json["caption"] as? [String: Any])?["text"] as? String) ?? ""
             let animFile = (anim["animation"] as? [String: Any]).map { TDFile(json: $0) }
-            self = .animation(caption: animCap, duration: anim["duration"] as? Int ?? 0, file: animFile)
+            return .animation(caption: animCap, duration: anim["duration"] as? Int ?? 0, file: animFile)
         case "messageDice":
-            self = .dice(
-                emoji: json["emoji"] as? String ?? "🎲",
-                value: json["value"] as? Int ?? 0
-            )
+            return .dice(emoji: json["emoji"] as? String ?? "🎲", value: json["value"] as? Int ?? 0)
         case "messageAnimatedEmoji":
             let e = (json["animated_emoji"] as? [String: Any]).flatMap {
                 ($0["sticker"] as? [String: Any])?["emoji"] as? String
             } ?? json["emoji"] as? String ?? "?"
-            self = .animatedEmoji(emoji: e)
-        case "messageChatChangeTitle":
-            self = .service(text: "Changed the title to \"\(json["title"] as? String ?? "")\"")
-        case "messageChatAddMembers":
-            self = .service(text: "Members were added")
-        case "messageChatDeleteMember":
-            self = .service(text: "Left the group")
-        case "messageChatJoinByLink", "messageChatJoinByRequest":
-            self = .service(text: "Joined the group")
-        case "messagePinMessage":
-            self = .service(text: "Pinned a message")
-        case "messageBasicGroupChatCreate", "messageSupergroupChatCreate":
-            self = .service(text: "Created the group")
-        case "messageChatUpgradeFrom", "messageChatUpgradeTo":
-            self = .service(text: "Group was upgraded")
-        case "messageScreenshotTaken":
-            self = .service(text: "Took a screenshot")
-        case "messageChatSetMessageAutoDeleteTime":
-            self = .service(text: "Auto-delete timer changed")
-        case "messageGiftedPremium", "messagePremiumGiftCode":
-            self = .service(text: "Gifted Telegram Premium")
-        case "messageExpiredPhoto", "messageExpiredVideo", "messageExpiredVideoNote", "messageExpiredVoiceNote":
-            self = .service(text: "Self-destructed media")
+            return .animatedEmoji(emoji: e)
         default:
-            self = .unknown(type: json["@type"] as? String ?? "unknown")
+            return nil
+        }
+    }
+
+    private static func parseService(json: [String: Any], type: String) -> MessageContent {
+        switch type {
+        case "messageChatChangeTitle":
+            return .service(text: "Changed the title to \"\(json["title"] as? String ?? "")\"")
+        case "messageChatAddMembers":
+            return .service(text: "Members were added")
+        case "messageChatDeleteMember":
+            return .service(text: "Left the group")
+        case "messageChatJoinByLink", "messageChatJoinByRequest":
+            return .service(text: "Joined the group")
+        case "messagePinMessage":
+            return .service(text: "Pinned a message")
+        case "messageBasicGroupChatCreate", "messageSupergroupChatCreate":
+            return .service(text: "Created the group")
+        case "messageChatUpgradeFrom", "messageChatUpgradeTo":
+            return .service(text: "Group was upgraded")
+        case "messageScreenshotTaken":
+            return .service(text: "Took a screenshot")
+        case "messageChatSetMessageAutoDeleteTime":
+            return .service(text: "Auto-delete timer changed")
+        case "messageGiftedPremium", "messagePremiumGiftCode":
+            return .service(text: "Gifted Telegram Premium")
+        case "messageExpiredPhoto", "messageExpiredVideo", "messageExpiredVideoNote", "messageExpiredVoiceNote":
+            return .service(text: "Self-destructed media")
+        default:
+            return .unknown(type: type)
         }
     }
 

@@ -66,25 +66,25 @@ struct MessageContentTests {
 
     @Test("photo with caption")
     func photoWithCaption() {
-        let content = MessageContent.photo(caption: "Sunset", hasSpoiler: false)
+        let content = MessageContent.photo(caption: "Sunset", hasSpoiler: false, file: nil)
         #expect(content.accessibilityDescription == "Photo: Sunset")
     }
 
     @Test("photo with spoiler hides content")
     func photoSpoiler() {
-        let content = MessageContent.photo(caption: "", hasSpoiler: true)
+        let content = MessageContent.photo(caption: "", hasSpoiler: true, file: nil)
         #expect(content.accessibilityDescription.contains("spoiler"))
     }
 
     @Test("sticker includes emoji")
     func stickerEmoji() {
-        let content = MessageContent.sticker(emoji: "😂")
+        let content = MessageContent.sticker(emoji: "😂", file: nil)
         #expect(content.accessibilityDescription == "😂 sticker")
     }
 
     @Test("voice includes duration")
     func voiceDuration() {
-        let content = MessageContent.voice(duration: 65)
+        let content = MessageContent.voice(duration: 65, file: nil)
         #expect(content.accessibilityDescription.contains("1:05"))
     }
 

@@ -8,7 +8,7 @@ struct ChatView: View {
     @State private var viewModel: ChatViewModel
     @State private var showProfile = false
     @AccessibilityFocusState private var inputFocused: Bool
-    @State private var pendingScrollAnchor: Int64? = nil
+    @State private var pendingScrollAnchor: Int64?
     @State private var scrollToBottomTrigger = 0
     @State private var isDraggedOver = false
 

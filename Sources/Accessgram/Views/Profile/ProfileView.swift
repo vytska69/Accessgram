@@ -38,55 +38,12 @@ struct ProfileView: View {
     private func loadedView(vm: ProfileViewModel) -> some View {
         ScrollView {
             VStack(spacing: 20) {
-                AvatarView(title: chat.title, size: 80)
-                    .accessibilityHidden(true)
-
-                VStack(spacing: 6) {
-                    Text(vm.displayName.isEmpty ? chat.title : vm.displayName)
-                        .font(.title2.bold())
-                        .accessibilityAddTraits(.isHeader)
-
-                    if let u = vm.username {
-                        Text("@\(u)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .accessibilityLabel("Username: @\(u)")
-                    }
-
-                    if !vm.status.isEmpty {
-                        Text(vm.status)
-                            .font(.caption)
-                            .foregroundStyle(vm.status == "Online" ? .green : .secondary)
-                    }
-                }
-
+                AvatarView(title: chat.title, size: 80).accessibilityHidden(true)
+                profileHeader(vm: vm)
                 Divider()
-
-                VStack(alignment: .leading, spacing: 12) {
-                    if !vm.phone.isEmpty {
-                        profileRow(icon: "phone", label: "Phone", value: vm.phone)
-                    }
-                    if !vm.bio.isEmpty {
-                        profileRow(icon: "text.alignleft", label: "Bio", value: vm.bio)
-                    }
-                    if !vm.description.isEmpty {
-                        profileRow(icon: "info.circle", label: "Description", value: vm.description)
-                    }
-                    if let count = vm.memberCount {
-                        profileRow(
-                            icon: "person.2",
-                            label: "Members",
-                            value: "\(count)"
-                        )
-                    }
-                    profileRow(icon: "bubble.left", label: "Type", value: chat.type.typeLabel)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
+                profileDetails(vm: vm)
                 Divider()
-
                 actionsSection(vm: vm)
-
                 Spacer()
             }
             .padding(32)
@@ -106,10 +63,7 @@ struct ProfileView: View {
             titleVisibility: .visible
         ) {
             Button("Leave", role: .destructive) {
-                Task {
-                    try? await vm.leaveChat()
-                    dismiss()
-                }
+                Task { try? await vm.leaveChat(); dismiss() }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
@@ -128,6 +82,44 @@ struct ProfileView: View {
             }
             Button("Cancel", role: .cancel) {}
         }
+    }
+
+    private func profileHeader(vm: ProfileViewModel) -> some View {
+        VStack(spacing: 6) {
+            Text(vm.displayName.isEmpty ? chat.title : vm.displayName)
+                .font(.title2.bold())
+                .accessibilityAddTraits(.isHeader)
+            if let u = vm.username {
+                Text("@\(u)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .accessibilityLabel("Username: @\(u)")
+            }
+            if !vm.status.isEmpty {
+                Text(vm.status)
+                    .font(.caption)
+                    .foregroundStyle(vm.status == "Online" ? .green : .secondary)
+            }
+        }
+    }
+
+    private func profileDetails(vm: ProfileViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if !vm.phone.isEmpty {
+                profileRow(icon: "phone", label: "Phone", value: vm.phone)
+            }
+            if !vm.bio.isEmpty {
+                profileRow(icon: "text.alignleft", label: "Bio", value: vm.bio)
+            }
+            if !vm.description.isEmpty {
+                profileRow(icon: "info.circle", label: "Description", value: vm.description)
+            }
+            if let count = vm.memberCount {
+                profileRow(icon: "person.2", label: "Members", value: "\(count)")
+            }
+            profileRow(icon: "bubble.left", label: "Type", value: chat.type.typeLabel)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder

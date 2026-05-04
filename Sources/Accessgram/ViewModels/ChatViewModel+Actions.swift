@@ -93,11 +93,13 @@ extension ChatViewModel {
     func sendAttachment(url: URL) async {
         let ext = url.pathExtension.lowercased()
         let imageExts = ["jpg", "jpeg", "png", "heic", "gif", "webp"]
+        let date = scheduledDate
+        scheduledDate = nil
         do {
             if imageExts.contains(ext) {
-                try await client.sendPhoto(chatId: chat.id, filePath: url.path, caption: "")
+                try await client.sendPhoto(chatId: chat.id, filePath: url.path, caption: "", scheduledDate: date)
             } else {
-                try await client.sendDocument(chatId: chat.id, filePath: url.path, caption: "")
+                try await client.sendDocument(chatId: chat.id, filePath: url.path, caption: "", scheduledDate: date)
             }
         } catch {
             errorMessage = error.localizedDescription

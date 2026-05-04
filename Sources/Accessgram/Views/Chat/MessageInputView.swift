@@ -5,15 +5,18 @@ struct MessageInputView: View {
     @Binding var text: String
     let isSending: Bool
     var inputFocused: AccessibilityFocusState<Bool>.Binding
+    @Binding var scheduledDate: Date?
     let onAttach: (URL) -> Void
     let onSend: () -> Void
 
     @FocusState private var fieldFocused: Bool
+    @State private var showSchedulePicker = false
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 8) {
             attachButton
             textField
+            scheduleButton
             sendButton
         }
         .padding(.horizontal, 12)
@@ -52,13 +55,28 @@ struct MessageInputView: View {
             }
     }
 
+    private var scheduleButton: some View {
+        Button {
+            showSchedulePicker.toggle()
+        } label: {
+            Image(systemName: scheduledDate != nil ? "calendar.badge.clock" : "calendar")
+                .font(.title3)
+                .foregroundStyle(scheduledDate != nil ? Color.accentColor : .secondary)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(scheduledDate != nil ? "Change scheduled send time" : "Schedule message")
+        .popover(isPresented: $showSchedulePicker, arrowEdge: .top) {
+            SchedulePickerView(scheduledDate: $scheduledDate)
+        }
+    }
+
     private var sendButton: some View {
         Button(action: onSend) {
             ZStack {
                 if isSending {
                     ProgressView().progressViewStyle(.circular).scaleEffect(0.7)
                 } else {
-                    Image(systemName: "arrow.up.circle.fill")
+                    Image(systemName: scheduledDate != nil ? "calendar.badge.plus" : "arrow.up.circle.fill")
                         .font(.title)
                         .foregroundStyle(
                             text.trimmingCharacters(in: .whitespaces).isEmpty
@@ -71,7 +89,7 @@ struct MessageInputView: View {
         .buttonStyle(.plain)
         .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty || isSending)
         .keyboardShortcut(.return, modifiers: [])
-        .accessibilityLabel(isSending ? "Sending" : "Send message")
+        .accessibilityLabel(isSending ? "Sending" : scheduledDate != nil ? "Confirm scheduled send" : "Send message")
         .accessibilityHint(text.isEmpty ? "Type a message first" : "Send '\(text)'")
     }
 
@@ -83,5 +101,47 @@ struct MessageInputView: View {
         panel.allowedContentTypes = [.item]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         onAttach(url)
+    }
+}
+
+private struct SchedulePickerView: View {
+    @Binding var scheduledDate: Date?
+    @State private var pickerDate: Date
+    @Environment(\.dismiss) private var dismiss
+
+    init(scheduledDate: Binding<Date?>) {
+        _scheduledDate = scheduledDate
+        _pickerDate = State(initialValue: scheduledDate.wrappedValue ?? Date().addingTimeInterval(3_600))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Schedule Message")
+                .font(.headline)
+            DatePicker(
+                "Send at",
+                selection: $pickerDate,
+                in: Date().addingTimeInterval(60)...,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            HStack {
+                if scheduledDate != nil {
+                    Button("Clear", role: .destructive) {
+                        scheduledDate = nil
+                        dismiss()
+                    }
+                }
+                Spacer()
+                Button("Cancel") { dismiss() }
+                Button("Schedule") {
+                    scheduledDate = pickerDate
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.return)
+            }
+        }
+        .padding(20)
+        .frame(width: 300)
     }
 }

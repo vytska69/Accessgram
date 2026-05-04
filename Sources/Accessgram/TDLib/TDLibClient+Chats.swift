@@ -28,7 +28,12 @@ extension TDLibClient {
         try await sendRaw("getMessage", params: ["chat_id": chatId, "message_id": messageId])
     }
 
-    func sendTextMessage(chatId: Int64, text: String, replyToId: Int64? = nil) async throws {
+    func sendTextMessage(
+        chatId: Int64,
+        text: String,
+        replyToId: Int64? = nil,
+        scheduledDate: Date? = nil
+    ) async throws {
         var params: [String: Any] = [
             "chat_id": chatId,
             "input_message_content": [
@@ -39,6 +44,12 @@ extension TDLibClient {
         ]
         if let rid = replyToId {
             params["reply_to"] = ["@type": "inputMessageReplyToMessage", "message_id": rid]
+        }
+        if let date = scheduledDate {
+            params["scheduling_state"] = [
+                "@type": "messageSchedulingStateSendAtDate",
+                "send_date": Int(date.timeIntervalSince1970)
+            ]
         }
         _ = try await sendRaw("sendMessage", params: params)
     }

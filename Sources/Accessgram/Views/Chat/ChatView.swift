@@ -202,11 +202,15 @@ struct ChatView: View {
         } else if let reply = viewModel.replyToMessage {
             ReplyPreviewBar(message: reply) { viewModel.cancelReply() }
         }
+        if viewModel.scheduledDate != nil {
+            scheduledBar
+        }
         Divider()
         MessageInputView(
             text: Binding(get: { viewModel.draftText }, set: { viewModel.draftText = $0 }),
             isSending: viewModel.isSending,
             inputFocused: $inputFocused,
+            scheduledDate: $viewModel.scheduledDate,
             onAttach: { url in Task { await viewModel.sendAttachment(url: url) } },
             onSend: {
                 if viewModel.editingMessage != nil {
@@ -216,6 +220,31 @@ struct ChatView: View {
                 }
             }
         )
+    }
+
+    private var scheduledBar: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "calendar.badge.clock")
+                .foregroundStyle(Color.accentColor)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Scheduled").font(.caption.bold()).foregroundStyle(Color.accentColor)
+                if let date = viewModel.scheduledDate {
+                    Text(date, style: .dateTime).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            Button(action: { viewModel.scheduledDate = nil }) {
+                Image(systemName: "xmark").font(.caption.bold())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cancel scheduled send")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.quinary)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Message scheduled for \(viewModel.scheduledDate.map { $0.formatted() } ?? ""). Button: Cancel.")
     }
 
     private func editBar(for message: Message) -> some View {

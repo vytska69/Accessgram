@@ -31,6 +31,9 @@ final class ChatViewModel {
     // Pinned
     var pinnedMessage: Message?
 
+    // Scheduling
+    var scheduledDate: Date?
+
     // Downloaded file paths keyed by TDLib file id
     var downloadedPaths: [Int32: String] = [:]
 
@@ -98,8 +101,10 @@ final class ChatViewModel {
         draftText = ""
         isSending = true
         defer { isSending = false }
+        let date = scheduledDate
+        scheduledDate = nil
         do {
-            try await client.sendTextMessage(chatId: chat.id, text: text, replyToId: replyToMessage?.id)
+            try await client.sendTextMessage(chatId: chat.id, text: text, replyToId: replyToMessage?.id, scheduledDate: date)
             replyToMessage = nil
         } catch {
             errorMessage = error.localizedDescription

@@ -82,7 +82,13 @@ extension TDLibClient {
         return (done && !path.isEmpty) ? path : nil
     }
 
-    func sendDocument(chatId: Int64, filePath: String, caption: String, replyToId: Int64? = nil) async throws {
+    func sendDocument(
+        chatId: Int64,
+        filePath: String,
+        caption: String,
+        replyToId: Int64? = nil,
+        scheduledDate: Date? = nil
+    ) async throws {
         var params: [String: Any] = [
             "chat_id": chatId,
             "input_message_content": [
@@ -94,10 +100,22 @@ extension TDLibClient {
         if let rid = replyToId {
             params["reply_to"] = ["@type": "inputMessageReplyToMessage", "message_id": rid]
         }
+        if let date = scheduledDate {
+            params["scheduling_state"] = [
+                "@type": "messageSchedulingStateSendAtDate",
+                "send_date": Int(date.timeIntervalSince1970)
+            ]
+        }
         _ = try await sendRaw("sendMessage", params: params)
     }
 
-    func sendPhoto(chatId: Int64, filePath: String, caption: String, replyToId: Int64? = nil) async throws {
+    func sendPhoto(
+        chatId: Int64,
+        filePath: String,
+        caption: String,
+        replyToId: Int64? = nil,
+        scheduledDate: Date? = nil
+    ) async throws {
         var params: [String: Any] = [
             "chat_id": chatId,
             "input_message_content": [
@@ -108,6 +126,12 @@ extension TDLibClient {
         ]
         if let rid = replyToId {
             params["reply_to"] = ["@type": "inputMessageReplyToMessage", "message_id": rid]
+        }
+        if let date = scheduledDate {
+            params["scheduling_state"] = [
+                "@type": "messageSchedulingStateSendAtDate",
+                "send_date": Int(date.timeIntervalSince1970)
+            ]
         }
         _ = try await sendRaw("sendMessage", params: params)
     }

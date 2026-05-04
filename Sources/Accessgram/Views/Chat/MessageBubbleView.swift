@@ -1,7 +1,8 @@
-// swiftlint:disable file_length type_body_length
+// swiftlint:disable file_length
 import AppKit
 import SwiftUI
 
+// swiftlint:disable:next type_body_length
 @MainActor
 struct MessageBubbleView: View {
     let message: Message
@@ -458,3 +459,4 @@ private struct BubbleShape: Shape {
         return path
     }
 }
+// swiftlint:enable file_length

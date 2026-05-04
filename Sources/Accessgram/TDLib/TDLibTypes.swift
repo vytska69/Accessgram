@@ -85,16 +85,16 @@ enum MessageContent {
 
     init(json: [String: Any]) {
         let type = json["@type"] as? String ?? ""
-        if let media = MessageContent.parseBasicMedia(json: json, type: type) {
+        if let media = Self.parseBasicMedia(json: json, type: type) {
             self = media
-        } else if let media = MessageContent.parseRichMedia(json: json, type: type) {
+        } else if let media = Self.parseRichMedia(json: json, type: type) {
             self = media
         } else {
-            self = MessageContent.parseService(json: json, type: type)
+            self = Self.parseService(json: json, type: type)
         }
     }
 
-    private static func parseBasicMedia(json: [String: Any], type: String) -> MessageContent? {
+    private static func parseBasicMedia(json: [String: Any], type: String) -> Self? {
         switch type {
         case "messageText":
             return .text((json["text"] as? [String: Any])?["text"] as? String ?? "")
@@ -130,7 +130,7 @@ enum MessageContent {
         }
     }
 
-    private static func parseRichMedia(json: [String: Any], type: String) -> MessageContent? {
+    private static func parseRichMedia(json: [String: Any], type: String) -> Self? {
         switch type {
         case "messageSticker":
             let stickerObj = json["sticker"] as? [String: Any] ?? [:]
@@ -177,7 +177,7 @@ enum MessageContent {
         }
     }
 
-    private static func parseService(json: [String: Any], type: String) -> MessageContent {
+    private static func parseService(json: [String: Any], type: String) -> Self {
         switch type {
         case "messageChatChangeTitle":
             return .service(text: "Changed the title to \"\(json["title"] as? String ?? "")\"")

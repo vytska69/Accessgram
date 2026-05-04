@@ -5,6 +5,7 @@ struct ChatListView: View {
     let viewModel: ChatListViewModel
     @Binding var selectedChatId: Int64?
     let onCompose: () -> Void
+    let onSavedMessages: () -> Void
     @AccessibilityFocusState private var searchFocused: Bool
     @State private var searchTask: Task<Void, Never>?
 
@@ -23,6 +24,12 @@ struct ChatListView: View {
                 }
                 .accessibilityLabel("New message")
                 .keyboardShortcut("n", modifiers: [.command, .shift])
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: onSavedMessages) {
+                    Image(systemName: "bookmark")
+                }
+                .accessibilityLabel("Saved Messages")
             }
             ToolbarItem(placement: .secondaryAction) {
                 Button { searchFocused = true } label: {

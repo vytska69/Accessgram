@@ -139,7 +139,17 @@ struct MainView: View {
             ChatListView(
                 viewModel: app.chatListViewModel,
                 selectedChatId: $selectedChatId,
-                onCompose: { showNewChat = true }
+                onCompose: { showNewChat = true },
+                onSavedMessages: {
+                    Task {
+                        guard app.myUserId != 0 else { return }
+                        if let chat = try? await app.client.createPrivateChat(userId: app.myUserId) {
+                            if let chatId = chat["id"] as? Int64 {
+                                selectedChatId = chatId
+                            }
+                        }
+                    }
+                }
             )
         case .contacts:
             ContactsView(selectedChatId: $selectedChatId)

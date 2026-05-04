@@ -129,7 +129,9 @@ jobs:
         id: version
         run: |
           CURRENT=$(cat VERSION)
-          NEW=$(python3 -c "v=float('$CURRENT'); print(f'{v+0.1:.1f}')")
+          N=$(echo "$CURRENT" | cut -d'.' -f2)
+          N=$((N + 1))
+          NEW="0.$N"
           echo "$NEW" > VERSION
           echo "version=$NEW" >> $GITHUB_OUTPUT
           echo "Bumping $CURRENT → $NEW"
@@ -199,9 +201,9 @@ jobs:
       - name: Create DMG
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          DATETIME=$(date -u "+%Y-%m-%d-%H-%M")
+          DATETIME=$(date -u "+%Y-%m-%d-%H%M")
           SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
-          DMG_BASE="Accessgram-${VERSION}-${DATETIME}"
+          DMG_BASE="accessgram-${DATETIME}-alpha"
           bash Scripts/make-dmg.sh "$DMG_BASE"
           echo "DMG_NAME=${DMG_BASE}.dmg" >> "$GITHUB_ENV"
           echo "SHORT_SHA=$SHORT_SHA" >> "$GITHUB_ENV"

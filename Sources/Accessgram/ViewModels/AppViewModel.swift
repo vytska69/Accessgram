@@ -20,6 +20,7 @@ enum AuthState: Equatable {
 final class AppViewModel {
     var authState: AuthState = .launching
     var errorMessage: String?
+    var myUserId: Int64 = 0
     let chatListViewModel: ChatListViewModel
 
     private let apiId: Int = 23618133
@@ -88,9 +89,15 @@ final class AppViewModel {
             if case .ready = authState { break }
             authState = .ready
             Task { await chatListViewModel.loadInitial() }
+            Task { await fetchMyUserId() }
         case .closed:
             authState = .launching
         }
+    }
+
+    private func fetchMyUserId() async {
+        guard let me = try? await client.getMe() else { return }
+        myUserId = me["id"] as? Int64 ?? 0
     }
 
     // MARK: - Background Notifications

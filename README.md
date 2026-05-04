@@ -183,7 +183,7 @@ Sources/
 
 ### Missing screens
 - [x] Global search (across all chats)
-- [ ] Saved Messages chat
+- [x] Saved Messages chat
 - [ ] Chat folders / filters sidebar
 - [ ] Notification settings per individual chat (not just scope)
 - [ ] Blocked users list

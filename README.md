@@ -187,7 +187,7 @@ Sources/
 - [x] Chat folders / filters sidebar
 - [x] Notification settings per individual chat (not just scope)
 - [x] Blocked users list
-- [ ] Two-step verification settings
+- [x] Two-step verification settings
 - [ ] Privacy exceptions (allow/deny specific users)
 
 ### Platform / infrastructure

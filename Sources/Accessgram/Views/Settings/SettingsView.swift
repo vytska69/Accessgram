@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var showLogOutConfirm = false
     @State private var showTerminateAllConfirm = false
     @State private var showBlockedUsers = false
+    @State private var showTwoStepVerification = false
 
     var body: some View {
         Group {
@@ -53,6 +54,12 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showBlockedUsers) {
             BlockedUsersView(client: app.client)
+        }
+        .sheet(isPresented: $showTwoStepVerification) {
+            NavigationStack {
+                TwoStepVerificationView(client: app.client)
+            }
+            .frame(minWidth: 380, minHeight: 480)
         }
         .confirmationDialog("Log out of Telegram?", isPresented: $showLogOutConfirm, titleVisibility: .visible) {
             Button("Log Out", role: .destructive) { Task { await app.logOut() } }
@@ -140,6 +147,12 @@ struct SettingsView: View {
     @ViewBuilder
     private func privacySection(vm: SettingsViewModel) -> some View {
         Section("Privacy") {
+            Button {
+                showTwoStepVerification = true
+            } label: {
+                Label("Two-Step Verification", systemImage: "lock.shield")
+            }
+            .accessibilityLabel("Manage two-step verification password")
             Button {
                 showBlockedUsers = true
             } label: {

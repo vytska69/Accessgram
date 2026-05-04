@@ -32,6 +32,26 @@ extension TDLibClient {
         try await sendRaw("getUserFullInfo", params: ["user_id": userId])
     }
 
+    func getPasswordState() async throws -> [String: Any] {
+        try await sendRaw("getPasswordState")
+    }
+
+    func setPassword(
+        oldPassword: String,
+        newPassword: String,
+        newHint: String,
+        setRecoveryEmail: Bool = false,
+        newEmail: String = ""
+    ) async throws {
+        _ = try await sendRaw("setPassword", params: [
+            "old_password": oldPassword,
+            "new_password": newPassword,
+            "new_hint": newHint,
+            "set_recovery_email_address": setRecoveryEmail,
+            "new_recovery_email_address": newEmail
+        ])
+    }
+
     func getBlockedMessageSenders(offset: Int = 0, limit: Int = 20) async throws -> [MessageSender] {
         let resp = try await sendRaw("getBlockedMessageSenders", params: [
             "block_list": ["@type": "blockListMain"],

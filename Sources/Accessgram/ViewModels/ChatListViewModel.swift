@@ -8,12 +8,22 @@ final class ChatListViewModel {
     var isLoading = false
     var searchQuery = ""
     var folders: [ChatFolder] = []
-    var activeFolderId: Int?
+    var activeFolderId: Int? {
+        didSet { Task { await activeFolderDidChange() } }
+    }
     var errorMessage: String?
 
+    private var folderChatIds: Set<Int64>?
+
     var filteredChats: [Chat] {
-        if searchQuery.isEmpty { return chats }
-        return chats.filter { $0.title.localizedCaseInsensitiveContains(searchQuery) }
+        var result = chats
+        if let ids = folderChatIds {
+            result = result.filter { ids.contains($0.id) }
+        }
+        if !searchQuery.isEmpty {
+            result = result.filter { $0.title.localizedCaseInsensitiveContains(searchQuery) }
+        }
+        return result
     }
 
     struct MessageSearchResult: Identifiable {
@@ -52,6 +62,20 @@ final class ChatListViewModel {
     func loadFolders() async {
         guard let raw = try? await client.getChatFolders() else { return }
         folders = raw.map { ChatFolder(json: $0) }
+    }
+
+    private func activeFolderDidChange() async {
+        guard let id = activeFolderId else {
+            folderChatIds = nil
+            return
+        }
+        // Ensure TDLib has loaded chats for this folder.
+        await client.loadChatFolder(folderId: id)
+        guard let ids = try? await client.getChatFolderChats(folderId: id) else { return }
+        // Guard against a race where the user switched folders mid-flight.
+        if activeFolderId == id {
+            folderChatIds = Set(ids)
+        }
     }
 
     // MARK: - Update Handling

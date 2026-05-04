@@ -184,7 +184,7 @@ Sources/
 ### Missing screens
 - [x] Global search (across all chats)
 - [x] Saved Messages chat
-- [ ] Chat folders / filters sidebar
+- [x] Chat folders / filters sidebar
 - [ ] Notification settings per individual chat (not just scope)
 - [x] Blocked users list
 - [ ] Two-step verification settings

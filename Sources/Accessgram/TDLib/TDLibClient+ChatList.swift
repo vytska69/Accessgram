@@ -47,6 +47,18 @@ extension TDLibClient {
         return resp["folders"] as? [[String: Any]] ?? []
     }
 
+    func getChatFolderChats(folderId: Int) async throws -> [Int64] {
+        let resp = try await sendRaw("getChatFolderChats", params: ["chat_folder_id": folderId])
+        return resp["chat_ids"] as? [Int64] ?? []
+    }
+
+    func loadChatFolder(folderId: Int, limit: Int = 50) async {
+        _ = try? await sendRaw("loadChats", params: [
+            "chat_list": ["@type": "chatListFolder", "chat_folder_id": folderId],
+            "limit": limit
+        ])
+    }
+
     func getContacts() async throws -> [Int64] {
         let resp = try await sendRaw("getContacts")
         return resp["user_ids"] as? [Int64] ?? []

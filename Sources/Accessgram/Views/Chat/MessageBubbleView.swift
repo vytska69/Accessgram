@@ -2,7 +2,7 @@
 import AppKit
 import SwiftUI
 
-// swiftlint:disable:next type_body_length
+// swiftlint:disable type_body_length
 @MainActor
 struct MessageBubbleView: View {
     let message: Message
@@ -428,6 +428,7 @@ struct MessageBubbleView: View {
         Button("Delete…", role: .destructive) { onDelete() }
     }
 }
+// swiftlint:enable type_body_length
 
 // MARK: - Bubble Shape
 

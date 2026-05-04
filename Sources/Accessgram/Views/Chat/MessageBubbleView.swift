@@ -170,7 +170,21 @@ struct MessageBubbleView: View {
         case .sticker(let emoji, let file):
             stickerView(emoji: emoji, file: file)
         case .location(let lat, let lon):
-            Label(String(format: "%.4f, %.4f", lat, lon), systemImage: "mappin.circle.fill")
+            Button {
+                let q = "\(lat),\(lon)"
+                if let url = URL(string: "maps://?ll=\(q)&q=Location") {
+                    NSWorkspace.shared.open(url)
+                }
+            } label: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(String(format: "%.5f, %.5f", lat, lon), systemImage: "mappin.circle.fill")
+                    Text("Open in Maps")
+                        .font(.caption)
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(String(format: "Location %.5f, %.5f. Open in Maps.", lat, lon))
         case .contact(let first, let last, let phone):
             contactView(first: first, last: last, phone: phone)
         case .poll(let q):
@@ -393,7 +407,14 @@ struct MessageBubbleView: View {
     private var contextMenuItems: some View {
         Button("Reply") { onReply() }
         if case .text = message.content {
-            Button("Copy") { viewModel.copyText(of: message) }
+            Button("Copy Text") { viewModel.copyText(of: message) }
+        }
+        if case .supergroup(let gid, _) = viewModel.chat.type {
+            Button("Copy Link") {
+                let link = "https://t.me/c/\(gid)/\(message.id)"
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(link, forType: .string)
+            }
         }
         if message.isOutgoing {
             Button("Edit") { onEdit() }

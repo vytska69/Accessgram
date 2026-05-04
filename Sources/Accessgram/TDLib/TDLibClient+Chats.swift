@@ -81,6 +81,16 @@ extension TDLibClient {
         ])
     }
 
+    func searchAllMessages(query: String, limit: Int = 20) async throws -> [[String: Any]] {
+        let resp = try await sendRaw("searchMessages", params: [
+            "chat_list": ["@type": "chatListMain"],
+            "query": query,
+            "offset": "",
+            "limit": limit
+        ])
+        return resp["messages"] as? [[String: Any]] ?? []
+    }
+
     func searchChatMessages(chatId: Int64, query: String, limit: Int = 20) async throws -> [[String: Any]] {
         let resp = try await sendRaw("searchChatMessages", params: [
             "chat_id": chatId,

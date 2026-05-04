@@ -6,6 +6,7 @@ struct ChatListView: View {
     @Binding var selectedChatId: Int64?
     let onCompose: () -> Void
     @AccessibilityFocusState private var searchFocused: Bool
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -29,6 +30,14 @@ struct ChatListView: View {
                 }
                 .accessibilityLabel("Search conversations")
                 .keyboardShortcut("f", modifiers: .command)
+            }
+        }
+        .onChange(of: viewModel.searchQuery) { _, query in
+            searchTask?.cancel()
+            searchTask = Task {
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                guard !Task.isCancelled else { return }
+                await viewModel.searchMessages(query: query)
             }
         }
         .overlay(alignment: .bottom) {
@@ -98,7 +107,9 @@ struct ChatListView: View {
 
     @ViewBuilder
     private var chatContent: some View {
-        if viewModel.filteredChats.isEmpty && !viewModel.isLoading {
+        if !viewModel.searchQuery.isEmpty {
+            searchResultsView
+        } else if viewModel.filteredChats.isEmpty && !viewModel.isLoading {
             emptyState
         } else {
             List(viewModel.filteredChats, selection: $selectedChatId) { chat in
@@ -109,6 +120,59 @@ struct ChatListView: View {
             .listStyle(.sidebar)
             .accessibilityLabel("Conversations")
         }
+    }
+
+    @ViewBuilder
+    private var searchResultsView: some View {
+        List {
+            if !viewModel.filteredChats.isEmpty {
+                Section("Chats") {
+                    ForEach(viewModel.filteredChats) { chat in
+                        ChatRowView(chat: chat)
+                            .contentShape(Rectangle())
+                            .onTapGesture { selectedChatId = chat.id }
+                    }
+                }
+            }
+            Section("Messages") {
+                if viewModel.isSearchingMessages {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                } else if viewModel.messageSearchResults.isEmpty {
+                    Text("No messages found")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                } else {
+                    ForEach(viewModel.messageSearchResults) { result in
+                        Button {
+                            selectedChatId = result.chatId
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                HStack {
+                                    Text(result.chatTitle)
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Text(result.timeString)
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(result.preview)
+                                    .font(.body)
+                                    .lineLimit(1)
+                            }
+                            .padding(.vertical, 2)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(result.chatTitle): \(result.preview)")
+                    }
+                }
+            }
+        }
+        .listStyle(.sidebar)
     }
 
     @ViewBuilder

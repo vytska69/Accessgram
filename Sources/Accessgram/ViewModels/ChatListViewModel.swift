@@ -16,6 +16,17 @@ final class ChatListViewModel {
         return chats.filter { $0.title.localizedCaseInsensitiveContains(searchQuery) }
     }
 
+    struct MessageSearchResult: Identifiable {
+        let id: Int64
+        let chatId: Int64
+        let chatTitle: String
+        let preview: String
+        let timeString: String
+    }
+
+    var messageSearchResults: [MessageSearchResult] = []
+    var isSearchingMessages = false
+
     private let client: TDLibClient
 
     init(client: TDLibClient) {
@@ -127,6 +138,35 @@ final class ChatListViewModel {
             try await client.toggleChatIsMarkedAsUnread(chatId: chat.id, isMarked: !chat.isMarkedAsUnread)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    // MARK: - Global Message Search
+
+    func searchMessages(query: String) async {
+        guard !query.isEmpty else {
+            messageSearchResults = []
+            return
+        }
+        isSearchingMessages = true
+        defer { isSearchingMessages = false }
+        guard let raw = try? await client.searchAllMessages(query: query, limit: 20) else { return }
+        let fmt = DateFormatter()
+        fmt.timeStyle = .short
+        messageSearchResults = raw.compactMap { json -> MessageSearchResult? in
+            guard let id = json["id"] as? Int64,
+                  let chatId = json["chat_id"] as? Int64,
+                  let contentJson = json["content"] as? [String: Any] else { return nil }
+            let content = MessageContent(json: contentJson)
+            let date = Date(timeIntervalSince1970: TimeInterval(json["date"] as? Int32 ?? 0))
+            let title = chats.first { $0.id == chatId }?.title ?? "Unknown"
+            return MessageSearchResult(
+                id: id,
+                chatId: chatId,
+                chatTitle: title,
+                preview: content.previewText,
+                timeString: fmt.string(from: date)
+            )
         }
     }
 

@@ -176,13 +176,13 @@ Sources/
 - [ ] Message scheduling
 - [ ] Slow-mode indicator for groups
 - [ ] Supergroup/channel member list
-- [ ] Message link copying
+- [x] Message link copying (supergroups/channels)
 - [ ] Rich text formatting in composer (bold, italic, code)
 - [ ] Link preview in outgoing messages
 - [x] Drag-and-drop file attachments
 
 ### Missing screens
-- [ ] Global search (across all chats)
+- [x] Global search (across all chats)
 - [ ] Saved Messages chat
 - [ ] Chat folders / filters sidebar
 - [ ] Notification settings per individual chat (not just scope)

@@ -119,6 +119,18 @@ struct ChatView: View {
     // MARK: - Message List
 
     private var messageList: some View {
+        Group {
+            if viewModel.messages.isEmpty && viewModel.isLoading {
+                ProgressView("Loading messages…")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityLabel("Loading messages")
+            } else {
+                loadedMessageList
+            }
+        }
+    }
+
+    private var loadedMessageList: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 2) {

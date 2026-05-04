@@ -12,6 +12,7 @@ struct MessageBubbleView: View {
 
     @State private var photoPath: String?
     @State private var videoPath: String?
+    @State private var stickerPath: String?
     @State private var isDownloadingVideo = false
     @State private var isExpanded = false
 
@@ -166,8 +167,8 @@ struct MessageBubbleView: View {
             audioView(title: title, performer: performer, duration: duration, file: file)
         case .document(let name, let caption, _, let file):
             documentView(name: name, caption: caption, file: file)
-        case .sticker(let emoji):
-            Text(emoji).font(.system(size: 48))
+        case .sticker(let emoji, let file):
+            stickerView(emoji: emoji, file: file)
         case .location(let lat, let lon):
             Label(String(format: "%.4f, %.4f", lat, lon), systemImage: "mappin.circle.fill")
         case .contact(let first, let last, let phone):
@@ -191,6 +192,28 @@ struct MessageBubbleView: View {
             Text(emoji).font(.system(size: 48))
         case .unknown:
             Text("Unsupported message").font(.body).foregroundStyle(.secondary).italic()
+        }
+    }
+
+    // MARK: - Sticker
+
+    @ViewBuilder
+    private func stickerView(emoji: String, file: TDFile?) -> some View {
+        let path = stickerPath ?? file?.localPath
+        if let path, let img = NSImage(contentsOfFile: path) {
+            Image(nsImage: img)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 112, height: 112)
+        } else {
+            Text(emoji)
+                .font(.system(size: 64))
+                .task {
+                    guard let file, file.localPath == nil, stickerPath == nil else { return }
+                    await viewModel.downloadFile(file)
+                    stickerPath = viewModel.localPath(for: file)
+                }
         }
     }
 

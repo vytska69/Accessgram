@@ -48,9 +48,11 @@ final class ChatViewModel {
         defer { isLoading = false }
         do {
             var raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
-            if raw.isEmpty {
+            if raw.count < 10 {
+                // TDLib may not have history cached yet; wait and retry once
                 try? await Task.sleep(nanoseconds: 700_000_000)
-                raw = try await client.getChatHistory(chatId: chat.id, limit: 50)
+                let retry = try await client.getChatHistory(chatId: chat.id, limit: 50)
+                if retry.count > raw.count { raw = retry }
             }
             let loaded = raw.compactMap { TDMessage(json: $0) }.map { Message(tdMessage: $0) }.reversed() as [Message]
             messages = await resolveSenderNames(for: loaded)

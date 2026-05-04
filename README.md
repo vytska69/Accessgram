@@ -156,11 +156,11 @@ Sources/
 ## TODO
 
 ### Bugs / polish
-- [ ] Initial chat open sometimes loads fewer than 50 messages on a cold cache — retry helps but a proper loading indicator while TDLib fetches from the server would be better
+- [x] Initial chat open sometimes loads fewer than 50 messages on a cold cache — spinner shown while loading; retries if <10 messages returned
 - [x] Long messages don't have a "show more / show less" toggle
 - [ ] No in-app error recovery for TDLib initialization failures beyond "Try Again"
 - [x] Message timestamps don't show full date for older messages (only time)
-- [ ] Sticker rendering is emoji text-only — no animated or WebP stickers
+- [x] Sticker rendering is emoji text-only — now downloads WebP and renders as image, falls back to emoji for Lottie/unknown formats
 
 ### Missing message types
 - [x] GIF / animation (`messageAnimation`)

@@ -71,7 +71,7 @@ enum MessageContent {
     case video(caption: String, duration: Int, file: TDFile?)
     case audio(title: String, performer: String, duration: Int, file: TDFile?)
     case document(fileName: String, caption: String, mimeType: String, file: TDFile?)
-    case sticker(emoji: String)
+    case sticker(emoji: String, file: TDFile?)
     case voice(duration: Int, file: TDFile?)
     case videoNote(duration: Int, file: TDFile?)
     case location(latitude: Double, longitude: Double)
@@ -115,7 +115,9 @@ enum MessageContent {
                 file: (doc["document"] as? [String: Any]).map { TDFile(json: $0) }
             )
         case "messageSticker":
-            self = .sticker(emoji: (json["sticker"] as? [String: Any])?["emoji"] as? String ?? "")
+            let stickerObj = json["sticker"] as? [String: Any] ?? [:]
+            let stickerFile = (stickerObj["sticker"] as? [String: Any]).map { TDFile(json: $0) }
+            self = .sticker(emoji: stickerObj["emoji"] as? String ?? "", file: stickerFile)
         case "messageVoiceNote":
             let vn = json["voice_note"] as? [String: Any] ?? [:]
             let vnFile = (vn["voice"] as? [String: Any]).map { TDFile(json: $0) }
@@ -191,7 +193,7 @@ enum MessageContent {
             return who.isEmpty ? "Audio, \(tdFormatDuration(dur))" : "\(who), \(tdFormatDuration(dur))"
         case .document(let name, let cap, _, _):
             return "File: \(name)" + (cap.isEmpty ? "" : ": \(cap)")
-        case .sticker(let e): return "\(e) sticker"
+        case .sticker(let e, _): return "\(e) sticker"
         case .voice(let dur, _): return "Voice message, \(tdFormatDuration(dur))"
         case .videoNote(let dur, _): return "Video message, \(tdFormatDuration(dur))"
         case .location(let lat, let lon): return String(format: "Location: %.4f, %.4f", lat, lon)
@@ -215,7 +217,7 @@ enum MessageContent {
         case .video: return "🎥 Video"
         case .audio: return "🎵 Audio"
         case .document(let n, _, _, _): return "📎 \(n)"
-        case .sticker(let e): return "\(e) Sticker"
+        case .sticker(let e, _): return "\(e) Sticker"
         case .voice: return "🎤 Voice message"
         case .videoNote: return "⭕ Video message"
         case .location: return "📍 Location"

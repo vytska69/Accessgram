@@ -25,6 +25,7 @@ final class AppViewModel {
 
     private let apiId: Int = 23618133
     private let apiHash: String = "421fd1c66ea61e98d93734fe729f6181"
+    private var parametersApplied = false
 
     let client: TDLibClient
 
@@ -39,6 +40,9 @@ final class AppViewModel {
 
     func boot() async {
         Log.write("boot() start")
+        let isRetry = if case .error = authState { true } else { false }
+        parametersApplied = false
+        authState = .launching
         await client.clearUpdateHandlers()
         // Register chat list handler first so it catches updateNewChat from local cache.
         let clvm = chatListViewModel
@@ -52,6 +56,18 @@ final class AppViewModel {
             await self?.handleNotification(update)
         }
         await client.resetAndStart()
+        // On retry TDLib won't re-send waitTdlibParameters (update was already consumed),
+        // so manually trigger the parameters send.
+        if isRetry {
+            do {
+                parametersApplied = true
+                try await client.setParameters(apiId: apiId, apiHash: apiHash)
+                Log.write("retry: setParameters sent ok")
+            } catch {
+                parametersApplied = false
+                authState = .error(error.localizedDescription)
+            }
+        }
         Log.write("boot() receive loop started")
     }
 
@@ -60,13 +76,17 @@ final class AppViewModel {
         case .authorizationState(let state):
             Log.write("authorizationState → \(state)")
             if case .waitTdlibParameters = state {
-                Log.write("sending setTdlibParameters")
-                do {
-                    try await client.setParameters(apiId: apiId, apiHash: apiHash)
-                    Log.write("setParameters sent ok")
-                } catch {
-                    Log.write("setParameters error: \(error)")
-                    authState = .error(error.localizedDescription)
+                if !parametersApplied {
+                    Log.write("sending setTdlibParameters")
+                    do {
+                        parametersApplied = true
+                        try await client.setParameters(apiId: apiId, apiHash: apiHash)
+                        Log.write("setParameters sent ok")
+                    } catch {
+                        parametersApplied = false
+                        Log.write("setParameters error: \(error)")
+                        authState = .error(error.localizedDescription)
+                    }
                 }
             }
             applyAuthState(state)
@@ -92,6 +112,7 @@ final class AppViewModel {
             Task { await chatListViewModel.loadInitial() }
             Task { await fetchMyUserId() }
         case .closed:
+            parametersApplied = false
             authState = .launching
         }
     }

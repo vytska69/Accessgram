@@ -10,6 +10,7 @@ struct ChatView: View {
     @AccessibilityFocusState private var inputFocused: Bool
     @State private var pendingScrollAnchor: Int64? = nil
     @State private var scrollToBottomTrigger = 0
+    @State private var isDraggedOver = false
 
     init(chat: Chat, client: TDLibClient) {
         self.chat = chat
@@ -25,6 +26,29 @@ struct ChatView: View {
             if viewModel.showSearch { searchBar }
             messageList
             bottomBar
+        }
+        .onDrop(of: [.fileURL], isTargeted: $isDraggedOver) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadObject(ofClass: NSURL.self) { nsurl, _ in
+                guard let url = nsurl as URL? else { return }
+                DispatchQueue.main.async { Task { await viewModel.sendAttachment(url: url) } }
+            }
+            return true
+        }
+        .overlay {
+            if isDraggedOver {
+                ZStack {
+                    Color.primary.opacity(0.12)
+                    VStack(spacing: 14) {
+                        Image(systemName: "paperclip.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(Color.accentColor)
+                        Text("Drop to send")
+                            .font(.title2.bold())
+                    }
+                }
+                .allowsHitTesting(false)
+            }
         }
         .navigationTitle(chat.title)
         .navigationSubtitle(chat.type.typeLabel)

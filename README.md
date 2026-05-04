@@ -163,10 +163,10 @@ Sources/
 - [ ] Sticker rendering is emoji text-only — no animated or WebP stickers
 
 ### Missing message types
-- [ ] GIF / animation (`messageAnimation`)
+- [x] GIF / animation (`messageAnimation`)
 - [ ] Invoice / payment messages
 - [ ] Game messages
-- [ ] Dice messages
+- [x] Dice messages
 - [ ] Geo live location
 
 ### Missing chat features
@@ -179,7 +179,7 @@ Sources/
 - [ ] Message link copying
 - [ ] Rich text formatting in composer (bold, italic, code)
 - [ ] Link preview in outgoing messages
-- [ ] Drag-and-drop file attachments
+- [x] Drag-and-drop file attachments
 
 ### Missing screens
 - [ ] Global search (across all chats)

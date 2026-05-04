@@ -174,6 +174,17 @@ struct MessageBubbleView: View {
             contactView(first: first, last: last, phone: phone)
         case .poll(let q):
             Label(q, systemImage: "chart.bar.xaxis")
+        case .animation(let caption, let duration, let file):
+            videoView(caption: caption, duration: duration, file: file)
+        case .dice(let emoji, let value):
+            VStack(spacing: 4) {
+                Text(emoji).font(.system(size: 52))
+                if value > 0 {
+                    Text("\(value)")
+                        .font(.title3.bold())
+                        .foregroundStyle(.secondary)
+                }
+            }
         case .videoNote:
             Label("Video message", systemImage: "video.circle.fill")
         case .animatedEmoji(let emoji):

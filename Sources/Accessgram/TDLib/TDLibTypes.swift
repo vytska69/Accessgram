@@ -77,6 +77,8 @@ enum MessageContent {
     case location(latitude: Double, longitude: Double)
     case contact(firstName: String, lastName: String, phone: String)
     case poll(question: String)
+    case animation(caption: String, duration: Int, file: TDFile?)
+    case dice(emoji: String, value: Int)
     case animatedEmoji(emoji: String)
     case service(text: String)
     case unknown(type: String)
@@ -135,6 +137,16 @@ enum MessageContent {
         case "messagePoll":
             let q = ((json["poll"] as? [String: Any])?["question"] as? [String: Any])?["text"] as? String ?? ""
             self = .poll(question: q)
+        case "messageAnimation":
+            let anim = json["animation"] as? [String: Any] ?? [:]
+            let animCap = ((json["caption"] as? [String: Any])?["text"] as? String) ?? ""
+            let animFile = (anim["animation"] as? [String: Any]).map { TDFile(json: $0) }
+            self = .animation(caption: animCap, duration: anim["duration"] as? Int ?? 0, file: animFile)
+        case "messageDice":
+            self = .dice(
+                emoji: json["emoji"] as? String ?? "🎲",
+                value: json["value"] as? Int ?? 0
+            )
         case "messageAnimatedEmoji":
             let e = (json["animated_emoji"] as? [String: Any]).flatMap {
                 ($0["sticker"] as? [String: Any])?["emoji"] as? String
@@ -186,6 +198,10 @@ enum MessageContent {
         case .contact(let f, let l, let p):
             return "Contact: \([f, l].filter { !$0.isEmpty }.joined(separator: " ")), \(p)"
         case .poll(let q): return "Poll: \(q)"
+        case .animation(let cap, let dur, _):
+            return "GIF, \(tdFormatDuration(dur))" + (cap.isEmpty ? "" : ": \(cap)")
+        case .dice(let emoji, let value):
+            return value > 0 ? "Dice \(emoji), result: \(value)" : "Dice \(emoji)"
         case .animatedEmoji(let e): return "\(e) sticker"
         case .service(let t): return t
         case .unknown(let t): return "Unsupported message (\(t))"
@@ -205,6 +221,8 @@ enum MessageContent {
         case .location: return "📍 Location"
         case .contact: return "👤 Contact"
         case .poll(let q): return "📊 \(q)"
+        case .animation: return "🎞 GIF"
+        case .dice(let e, _): return "\(e) Dice"
         case .animatedEmoji(let e): return e
         case .service(let t): return t
         case .unknown: return "Message"

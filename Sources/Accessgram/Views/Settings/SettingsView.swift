@@ -257,6 +257,19 @@ struct SettingsView: View {
             Link(destination: URL(string: "https://telegram.org/privacy")!) {
                 Label("Privacy Policy", systemImage: "hand.raised")
             }
+            Button {
+                NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL])
+            } label: {
+                Label("Reveal Logs in Finder", systemImage: "doc.text.magnifyingglass")
+            }
+            .accessibilityHint("Opens ~/Library/Logs/Accessgram/ in Finder")
+            Button {
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(Log.fileURL.path, forType: .string)
+            } label: {
+                Label("Copy Log Path", systemImage: "doc.on.clipboard")
+            }
+            .accessibilityHint("Copies the log file path to clipboard")
         }
     }
 

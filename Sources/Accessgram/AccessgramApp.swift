@@ -12,6 +12,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             options: [.background, .userInitiatedAllowingIdleSystemSleep],
             reason: "Receiving Telegram messages"
         )
+        NSSetUncaughtExceptionHandler { exception in
+            Log.writeCrash(
+                reason: "\(exception.name.rawValue): \(exception.reason ?? "no reason")",
+                trace: exception.callStackSymbols
+            )
+        }
+        Log.write("App launched — v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

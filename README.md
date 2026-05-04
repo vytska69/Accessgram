@@ -194,6 +194,6 @@ Sources/
 - [ ] Push notifications via Apple Push Notification service (currently polls)
 - [ ] Multiple Telegram accounts
 - [ ] iCloud backup of local settings
-- [ ] Crash reporting
+- [x] Crash reporting
 - [ ] App Sandbox + hardened runtime for distribution
 - [ ] Localization (currently English only)

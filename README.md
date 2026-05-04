@@ -186,7 +186,7 @@ Sources/
 - [x] Saved Messages chat
 - [ ] Chat folders / filters sidebar
 - [ ] Notification settings per individual chat (not just scope)
-- [ ] Blocked users list
+- [x] Blocked users list
 - [ ] Two-step verification settings
 - [ ] Privacy exceptions (allow/deny specific users)
 

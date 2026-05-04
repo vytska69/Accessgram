@@ -6,6 +6,7 @@ struct SettingsView: View {
     @State private var vm: SettingsViewModel?
     @State private var showLogOutConfirm = false
     @State private var showTerminateAllConfirm = false
+    @State private var showBlockedUsers = false
 
     var body: some View {
         Group {
@@ -49,6 +50,9 @@ struct SettingsView: View {
             Button("OK") { vm.errorMessage = nil }
         } message: {
             Text(vm.errorMessage ?? "")
+        }
+        .sheet(isPresented: $showBlockedUsers) {
+            BlockedUsersView(client: app.client)
         }
         .confirmationDialog("Log out of Telegram?", isPresented: $showLogOutConfirm, titleVisibility: .visible) {
             Button("Log Out", role: .destructive) { Task { await app.logOut() } }
@@ -136,6 +140,12 @@ struct SettingsView: View {
     @ViewBuilder
     private func privacySection(vm: SettingsViewModel) -> some View {
         Section("Privacy") {
+            Button {
+                showBlockedUsers = true
+            } label: {
+                Label("Blocked Users", systemImage: "hand.raised")
+            }
+            .accessibilityLabel("View blocked users")
             let settings: [PrivacySetting] = [.lastSeen, .profilePhoto, .calls, .groupInvites, .forwards]
             ForEach(settings, id: \.self) { key in
                 HStack {

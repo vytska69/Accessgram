@@ -12,6 +12,12 @@ final class ProfileViewModel {
     var memberCount: Int?
     var description = ""
     var isLoading = false
+    var isMuted = false
+    var isBlocked = false
+    var errorMessage: String?
+
+    private var chatId: Int64 = 0
+    private var userId: Int64 = 0
 
     private let client: TDLibClient
 
@@ -19,7 +25,10 @@ final class ProfileViewModel {
         self.client = client
     }
 
-    func loadUser(id: Int64) async {
+    func loadUser(id: Int64, chatId: Int64, isMuted: Bool) async {
+        self.chatId = chatId
+        self.userId = id
+        self.isMuted = isMuted
         isLoading = true
         defer { isLoading = false }
         guard let userJSON = try? await client.getUser(id: id) else { return }
@@ -32,10 +41,13 @@ final class ProfileViewModel {
         status = UserStatus(json: statusJSON).description
         if let fullJSON = try? await client.getUserFullInfo(userId: id) {
             bio = (fullJSON["bio"] as? [String: Any])?["text"] as? String ?? ""
+            isBlocked = fullJSON["is_blocked"] as? Bool ?? false
         }
     }
 
-    func loadGroup(chatId: Int64, type: ChatType) async {
+    func loadGroup(chatId: Int64, type: ChatType, isMuted: Bool) async {
+        self.chatId = chatId
+        self.isMuted = isMuted
         isLoading = true
         defer { isLoading = false }
         switch type {
@@ -59,5 +71,32 @@ final class ProfileViewModel {
         if let full = try? await client.getBasicGroupFullInfo(groupId: id) {
             memberCount = (full["members"] as? [[String: Any]])?.count
         }
+    }
+
+    func toggleMute() async {
+        let muteFor = isMuted ? 0 : 2_147_483_647
+        do {
+            try await client.muteChat(chatId: chatId, muteFor: muteFor)
+            isMuted.toggle()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func toggleBlock() async {
+        do {
+            if isBlocked {
+                try await client.unblockUser(userId: userId)
+            } else {
+                try await client.blockUser(userId: userId)
+            }
+            isBlocked.toggle()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func leaveChat() async throws {
+        try await client.leaveChat(chatId: chatId)
     }
 }

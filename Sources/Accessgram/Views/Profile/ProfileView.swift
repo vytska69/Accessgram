@@ -4,7 +4,14 @@ import SwiftUI
 struct ProfileView: View {
     let chat: Chat
     @Environment(AppViewModel.self) private var app
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: ProfileViewModel?
+    @State private var showLeaveConfirm = false
+    @State private var showBlockConfirm = false
+
+    private var canLeave: Bool {
+        chat.type.isGroup || chat.type.isChannel
+    }
 
     var body: some View {
         Group {
@@ -20,9 +27,9 @@ struct ProfileView: View {
             viewModel = vm
             switch chat.type {
             case .private(let userId):
-                await vm.loadUser(id: userId)
+                await vm.loadUser(id: userId, chatId: chat.id, isMuted: chat.isMuted)
             default:
-                await vm.loadGroup(chatId: chat.id, type: chat.type)
+                await vm.loadGroup(chatId: chat.id, type: chat.type, isMuted: chat.isMuted)
             }
         }
     }
@@ -76,11 +83,95 @@ struct ProfileView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+                Divider()
+
+                actionsSection(vm: vm)
+
                 Spacer()
             }
             .padding(32)
         }
-        .frame(width: 340, height: 460)
+        .frame(width: 340, height: 520)
+        .alert("Error", isPresented: Binding(
+            get: { vm.errorMessage != nil },
+            set: { if !$0 { vm.errorMessage = nil } }
+        )) {
+            Button("OK") { vm.errorMessage = nil }
+        } message: {
+            Text(vm.errorMessage ?? "")
+        }
+        .confirmationDialog(
+            "Leave \"\(chat.title)\"?",
+            isPresented: $showLeaveConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Leave", role: .destructive) {
+                Task {
+                    try? await vm.leaveChat()
+                    dismiss()
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("You will no longer receive messages from this chat.")
+        }
+        .confirmationDialog(
+            vm.isBlocked ? "Unblock \(vm.displayName)?" : "Block \(vm.displayName)?",
+            isPresented: $showBlockConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(
+                vm.isBlocked ? "Unblock" : "Block",
+                role: vm.isBlocked ? .none : .destructive
+            ) {
+                Task { await vm.toggleBlock() }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    @ViewBuilder
+    private func actionsSection(vm: ProfileViewModel) -> some View {
+        VStack(spacing: 8) {
+            Button {
+                Task { await vm.toggleMute() }
+            } label: {
+                Label(
+                    vm.isMuted ? "Unmute" : "Mute",
+                    systemImage: vm.isMuted ? "bell" : "bell.slash"
+                )
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityLabel(vm.isMuted ? "Unmute chat" : "Mute chat")
+
+            if case .private = chat.type {
+                Button {
+                    showBlockConfirm = true
+                } label: {
+                    Label(
+                        vm.isBlocked ? "Unblock" : "Block",
+                        systemImage: vm.isBlocked ? "hand.raised.slash" : "hand.raised"
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(vm.isBlocked ? nil : .red)
+                .accessibilityLabel(vm.isBlocked ? "Unblock contact" : "Block contact")
+            }
+
+            if canLeave {
+                Button(role: .destructive) {
+                    showLeaveConfirm = true
+                } label: {
+                    Label("Leave", systemImage: "rectangle.portrait.and.arrow.right")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(.red)
+                .accessibilityLabel("Leave \(chat.title)")
+            }
+        }
     }
 
     private func profileRow(icon: String, label: String, value: String) -> some View {

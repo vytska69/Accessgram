@@ -143,4 +143,20 @@ extension TDLibClient {
     func getBasicGroupFullInfo(groupId: Int64) async throws -> [String: Any] {
         try await sendRaw("getBasicGroupFullInfo", params: ["basic_group_id": groupId])
     }
+
+    func leaveChat(chatId: Int64) async throws {
+        _ = try await sendRaw("leaveChat", params: ["chat_id": chatId])
+    }
+
+    func blockUser(userId: Int64) async throws {
+        _ = try await sendRaw("blockMessageSender", params: [
+            "sender_id": ["@type": "messageSenderUser", "user_id": userId]
+        ])
+    }
+
+    func unblockUser(userId: Int64) async throws {
+        _ = try await sendRaw("unblockMessageSender", params: [
+            "sender_id": ["@type": "messageSenderUser", "user_id": userId]
+        ])
+    }
 }

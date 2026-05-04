@@ -144,6 +144,15 @@ extension TDLibClient {
         try await sendRaw("getBasicGroupFullInfo", params: ["basic_group_id": groupId])
     }
 
+    func getSupergroupMembers(supergroupId: Int64, offset: Int = 0, limit: Int = 50) async throws -> [[String: Any]] {
+        let resp = try await sendRaw("getSupergroupMembers", params: [
+            "supergroup_id": supergroupId,
+            "offset": offset,
+            "limit": limit
+        ])
+        return resp["members"] as? [[String: Any]] ?? []
+    }
+
     func leaveChat(chatId: Int64) async throws {
         _ = try await sendRaw("leaveChat", params: ["chat_id": chatId])
     }

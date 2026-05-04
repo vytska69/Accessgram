@@ -175,7 +175,7 @@ Sources/
 - [ ] Inline reply preview loads the full message from the API (currently shows quote text only)
 - [ ] Message scheduling
 - [ ] Slow-mode indicator for groups
-- [ ] Supergroup/channel member list
+- [x] Supergroup/channel member list
 - [x] Message link copying (supergroups/channels)
 - [ ] Rich text formatting in composer (bold, italic, code)
 - [ ] Link preview in outgoing messages

@@ -8,6 +8,7 @@ struct ProfileView: View {
     @State private var viewModel: ProfileViewModel?
     @State private var showLeaveConfirm = false
     @State private var showBlockConfirm = false
+    @State private var showMembers = false
 
     private var canLeave: Bool {
         chat.type.isGroup || chat.type.isChannel
@@ -69,6 +70,9 @@ struct ProfileView: View {
         } message: {
             Text("You will no longer receive messages from this chat.")
         }
+        .sheet(isPresented: $showMembers) {
+            MembersView(viewModel: vm, chatTitle: chat.title)
+        }
         .confirmationDialog(
             vm.isBlocked ? "Unblock \(vm.displayName)?" : "Block \(vm.displayName)?",
             isPresented: $showBlockConfirm,
@@ -115,7 +119,15 @@ struct ProfileView: View {
                 profileRow(icon: "info.circle", label: "Description", value: vm.description)
             }
             if let count = vm.memberCount {
-                profileRow(icon: "person.2", label: "Members", value: "\(count)")
+                if chat.type.isGroup || chat.type.isChannel {
+                    Button { showMembers = true } label: {
+                        profileRow(icon: "person.2", label: "Members", value: "\(count)")
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Members: \(count). Tap to view list.")
+                } else {
+                    profileRow(icon: "person.2", label: "Members", value: "\(count)")
+                }
             }
             profileRow(icon: "bubble.left", label: "Type", value: chat.type.typeLabel)
         }

@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 
+// swiftlint:disable type_body_length
 @Observable
 @MainActor
 final class ProfileViewModel {
@@ -16,8 +17,14 @@ final class ProfileViewModel {
     var isBlocked = false
     var errorMessage: String?
 
+    var members: [ChatMember] = []
+    var isLoadingMembers = false
+    var hasMoreMembers = false
+
     private var chatId: Int64 = 0
     private var userId: Int64 = 0
+    private var chatType: ChatType = .private(userId: 0)
+    private var cachedBasicGroupMembers: [[String: Any]] = []
 
     private let client: TDLibClient
 
@@ -47,6 +54,7 @@ final class ProfileViewModel {
 
     func loadGroup(chatId: Int64, type: ChatType, isMuted: Bool) async {
         self.chatId = chatId
+        self.chatType = type
         self.isMuted = isMuted
         isLoading = true
         defer { isLoading = false }
@@ -69,9 +77,65 @@ final class ProfileViewModel {
 
     private func loadBasicGroup(id: Int64) async {
         if let full = try? await client.getBasicGroupFullInfo(groupId: id) {
-            memberCount = (full["members"] as? [[String: Any]])?.count
+            let rawMembers = full["members"] as? [[String: Any]] ?? []
+            memberCount = rawMembers.count
+            cachedBasicGroupMembers = rawMembers
         }
     }
+
+    // MARK: - Members
+
+    func loadMembers() async {
+        guard members.isEmpty, !isLoadingMembers else { return }
+        isLoadingMembers = true
+        defer { isLoadingMembers = false }
+        switch chatType {
+        case .supergroup(let sgId, _):
+            await fetchSupergroupMembers(supergroupId: sgId, offset: 0)
+        case .basicGroup:
+            members = await resolveMembers(from: cachedBasicGroupMembers)
+            hasMoreMembers = false
+        default:
+            break
+        }
+    }
+
+    func loadMoreMembers() async {
+        guard case .supergroup(let sgId, _) = chatType, hasMoreMembers, !isLoadingMembers else { return }
+        isLoadingMembers = true
+        defer { isLoadingMembers = false }
+        await fetchSupergroupMembers(supergroupId: sgId, offset: members.count)
+    }
+
+    private func fetchSupergroupMembers(supergroupId: Int64, offset: Int) async {
+        guard let raw = try? await client.getSupergroupMembers(
+            supergroupId: supergroupId, offset: offset, limit: 50
+        ) else { return }
+        let newMembers = await resolveMembers(from: raw)
+        if offset == 0 {
+            members = newMembers
+        } else {
+            members.append(contentsOf: newMembers)
+        }
+        hasMoreMembers = raw.count == 50
+    }
+
+    private func resolveMembers(from raw: [[String: Any]]) async -> [ChatMember] {
+        var result: [ChatMember] = []
+        for memberJSON in raw {
+            guard let senderJSON = memberJSON["member_id"] as? [String: Any],
+                  case .user(let uid) = MessageSender(json: senderJSON),
+                  let userJSON = try? await client.getUser(id: uid) else { continue }
+            let first = userJSON["first_name"] as? String ?? ""
+            let last = userJSON["last_name"] as? String ?? ""
+            let name = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
+            let statusType = (memberJSON["status"] as? [String: Any])?["@type"] as? String ?? ""
+            result.append(ChatMember(id: uid, name: name.isEmpty ? "Unknown" : name, role: .init(statusType: statusType)))
+        }
+        return result
+    }
+
+    // MARK: - Actions
 
     func toggleMute() async {
         let muteFor = isMuted ? 0 : 2_147_483_647
@@ -100,3 +164,4 @@ final class ProfileViewModel {
         try await client.leaveChat(chatId: chatId)
     }
 }
+// swiftlint:enable type_body_length

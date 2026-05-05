@@ -14,9 +14,13 @@ struct MessageInputView: View {
     @State private var editorHeight: CGFloat = 36
     @State private var showSchedulePicker = false
 
+    private var prefs: AppPreferences { AppPreferences.shared }
+
     var body: some View {
         VStack(spacing: 0) {
-            formatBar
+            if prefs.showFormatBar {
+                formatBar
+            }
             HStack(alignment: .bottom, spacing: 8) {
                 attachButton
                 richTextField

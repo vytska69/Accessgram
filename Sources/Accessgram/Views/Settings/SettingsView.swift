@@ -33,6 +33,7 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             List {
                 profileSection(vm: vm)
+                generalSection
                 notificationsSection(vm: vm)
                 privacySection(vm: vm)
                 sessionsSection(vm: vm)
@@ -111,6 +112,55 @@ struct SettingsView: View {
             .accessibilityElement(children: .combine)
             .accessibilityLabel([vm.myName, vm.myHandle, vm.myPhone.isEmpty ? "" : "+\(vm.myPhone)"]
                 .filter { !$0.isEmpty }.joined(separator: ", "))
+        }
+    }
+
+    // MARK: - General
+
+    private var generalSection: some View {
+        let prefs = AppPreferences.shared
+        return Section {
+            Toggle("Show Format Bar", isOn: Binding(
+                get: { prefs.showFormatBar },
+                set: { prefs.showFormatBar = $0 }
+            ))
+            .accessibilityLabel("Show rich text format bar in composer")
+
+            Toggle("Compact Chat List", isOn: Binding(
+                get: { prefs.compactChatList },
+                set: { prefs.compactChatList = $0 }
+            ))
+            .accessibilityLabel("Use compact density for chat list rows")
+
+            Toggle("Sound on New Message", isOn: Binding(
+                get: { prefs.playSoundOnMessage },
+                set: { prefs.playSoundOnMessage = $0 }
+            ))
+            .accessibilityLabel("Play a sound when a new message arrives")
+
+            Toggle("Jump to Latest on Open", isOn: Binding(
+                get: { prefs.jumpToLatestOnOpen },
+                set: { prefs.jumpToLatestOnOpen = $0 }
+            ))
+            .accessibilityLabel("Scroll to the newest message when opening a chat")
+        } header: {
+            HStack {
+                Text("General")
+                Spacer()
+                if prefs.iCloudAvailable {
+                    Label("iCloud", systemImage: "icloud")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Local only")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } footer: {
+            Text(prefs.iCloudAvailable
+                 ? "Preferences are synced across your devices via iCloud."
+                 : "Sign into iCloud in System Settings to sync preferences across devices.")
         }
     }
 

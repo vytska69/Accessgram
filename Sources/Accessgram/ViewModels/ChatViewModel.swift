@@ -64,6 +64,8 @@ final class ChatViewModel {
     // Rich text entities (bold/italic/code) for the current draft
     var draftEntities: [[String: Any]] = []
 
+    var shouldAutoScrollToLatest: Bool { AppPreferences.shared.jumpToLatestOnOpen }
+
     // Downloaded file paths keyed by TDLib file id
     var downloadedPaths: [Int32: String] = [:]
 

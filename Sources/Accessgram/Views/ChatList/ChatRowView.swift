@@ -3,9 +3,14 @@ import SwiftUI
 struct ChatRowView: View {
     let chat: Chat
 
+    private var prefs: AppPreferences { AppPreferences.shared }
+
+    private var avatarSize: CGFloat { prefs.compactChatList ? 36 : 44 }
+    private var verticalPad: CGFloat { prefs.compactChatList ? 2 : 4 }
+
     var body: some View {
         HStack(spacing: 12) {
-            AvatarView(title: chat.title, size: 44)
+            AvatarView(title: chat.title, size: avatarSize)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -17,7 +22,7 @@ struct ChatRowView: View {
                             .accessibilityHidden(true)
                     }
                     Text(chat.title)
-                        .font(.headline)
+                        .font(prefs.compactChatList ? .subheadline : .headline)
                         .lineLimit(1)
                     Spacer()
                     if let last = chat.lastMessage {
@@ -27,17 +32,21 @@ struct ChatRowView: View {
                     }
                 }
 
-                HStack {
-                    Text(chat.lastMessagePreview)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                    Spacer()
-                    badgeArea
+                if !prefs.compactChatList {
+                    HStack {
+                        Text(chat.lastMessagePreview)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer()
+                        badgeArea
+                    }
+                } else {
+                    badgeArea.frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, verticalPad)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(chat.accessibilityLabel)
         .accessibilityHint("Open conversation")

@@ -193,7 +193,7 @@ Sources/
 ### Platform / infrastructure
 - [ ] Push notifications via Apple Push Notification service (currently polls)
 - [ ] Multiple Telegram accounts
-- [ ] iCloud backup of local settings
+- [x] iCloud backup of local settings
 - [x] Crash reporting
 - [ ] App Sandbox + hardened runtime for distribution
 - [ ] Localization (currently English only)

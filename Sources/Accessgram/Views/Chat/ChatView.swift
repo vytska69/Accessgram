@@ -167,7 +167,7 @@ struct ChatView: View {
                 .padding(.vertical, 8)
             }
             .onChange(of: viewModel.messages.last?.id) { _, newId in
-                if let newId {
+                if let newId, viewModel.shouldAutoScrollToLatest {
                     withAnimation { proxy.scrollTo(newId, anchor: .bottom) }
                 }
             }

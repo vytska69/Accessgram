@@ -61,6 +61,9 @@ final class ChatViewModel {
     private var linkPreviewURL: String?
     var linkPreviewDismissed = false
 
+    // Rich text entities (bold/italic/code) for the current draft
+    var draftEntities: [[String: Any]] = []
+
     // Downloaded file paths keyed by TDLib file id
     var downloadedPaths: [Int32: String] = [:]
 
@@ -131,13 +134,16 @@ final class ChatViewModel {
         let date = scheduledDate
         scheduledDate = nil
         let disablePreview = linkPreviewDismissed
+        let entities = draftEntities
         linkPreview = nil
         linkPreviewURL = nil
         linkPreviewDismissed = false
+        draftEntities = []
         do {
             try await client.sendTextMessage(
                 chatId: chat.id,
                 text: text,
+                entities: entities,
                 replyToId: replyToMessage?.id,
                 scheduledDate: date,
                 disableLinkPreview: disablePreview

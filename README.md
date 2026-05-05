@@ -177,7 +177,7 @@ Sources/
 - [x] Slow-mode indicator for groups
 - [x] Supergroup/channel member list
 - [x] Message link copying (supergroups/channels)
-- [ ] Rich text formatting in composer (bold, italic, code)
+- [x] Rich text formatting in composer (bold, italic, code)
 - [x] Link preview in outgoing messages
 - [x] Drag-and-drop file attachments
 

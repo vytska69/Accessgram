@@ -31,6 +31,7 @@ extension TDLibClient {
     func sendTextMessage(
         chatId: Int64,
         text: String,
+        entities: [[String: Any]] = [],
         replyToId: Int64? = nil,
         scheduledDate: Date? = nil,
         disableLinkPreview: Bool = false
@@ -39,7 +40,7 @@ extension TDLibClient {
             "chat_id": chatId,
             "input_message_content": [
                 "@type": "inputMessageText",
-                "text": ["@type": "formattedText", "text": text, "entities": []],
+                "text": ["@type": "formattedText", "text": text, "entities": entities],
                 "clear_draft": true
             ]
         ]

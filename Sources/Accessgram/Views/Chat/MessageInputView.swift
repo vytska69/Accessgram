@@ -7,22 +7,83 @@ struct MessageInputView: View {
     var inputFocused: AccessibilityFocusState<Bool>.Binding
     @Binding var scheduledDate: Date?
     let onAttach: (URL) -> Void
+    let onFormattedChange: (String, [[String: Any]]) -> Void
     let onSend: () -> Void
 
-    @FocusState private var fieldFocused: Bool
+    @State private var editorContext = RichTextEditorContext()
+    @State private var editorHeight: CGFloat = 36
     @State private var showSchedulePicker = false
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 8) {
-            attachButton
-            textField
-            scheduleButton
-            sendButton
+        VStack(spacing: 0) {
+            formatBar
+            HStack(alignment: .bottom, spacing: 8) {
+                attachButton
+                richTextField
+                scheduleButton
+                sendButton
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
         .background(Color(nsColor: .windowBackgroundColor))
     }
+
+    // MARK: - Format bar
+
+    private var formatBar: some View {
+        HStack(spacing: 0) {
+            formatButton(label: "B", font: .system(.caption).bold(), hint: "Bold (⌘B)") {
+                editorContext.bold()
+            }
+            formatButton(label: "I", font: .system(.caption).italic(), hint: "Italic (⌘I)") {
+                editorContext.italic()
+            }
+            formatButton(label: "</>", font: .system(.caption, design: .monospaced), hint: "Code (⌘E)") {
+                editorContext.code()
+            }
+            Spacer()
+            Text("Select text then apply format")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.trailing, 8)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    private func formatButton(label: String, font: Font, hint: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(label)
+                .font(font)
+                .foregroundStyle(.secondary)
+                .frame(width: 30, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(hint)
+    }
+
+    // MARK: - Rich text field
+
+    private var richTextField: some View {
+        RichTextEditor(
+            text: $text,
+            editorHeight: $editorHeight,
+            inputFocused: inputFocused,
+            editorContext: editorContext,
+            onFormattedChange: onFormattedChange,
+            onSubmit: onSend
+        )
+        .frame(height: min(max(editorHeight, 36), 130))
+        .background(Color(nsColor: .controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .accessibilityLabel("Message input")
+        .accessibilityHint("Type your message. ⌘B bold, ⌘I italic, ⌘E code. Return to send, Shift-Return for a new line.")
+    }
+
+    // MARK: - Attach
 
     private var attachButton: some View {
         Button { openAttachPanel() } label: {
@@ -35,30 +96,10 @@ struct MessageInputView: View {
         .accessibilityHint("Send a photo or file")
     }
 
-    private var textField: some View {
-        TextField("Message", text: $text, axis: .vertical)
-            .lineLimit(1...6)
-            .textFieldStyle(.plain)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 18))
-            .focused($fieldFocused)
-            .onSubmit {
-                if !NSEvent.modifierFlags.contains(.shift) { onSend() }
-            }
-            .accessibilityLabel("Message input")
-            .accessibilityHint("Type your message. Return to send, Shift-Return for a new line.")
-            .accessibilityFocused(inputFocused)
-            .onChange(of: inputFocused.wrappedValue) { _, focused in
-                if focused { fieldFocused = true }
-            }
-    }
+    // MARK: - Schedule
 
     private var scheduleButton: some View {
-        Button {
-            showSchedulePicker.toggle()
-        } label: {
+        Button { showSchedulePicker.toggle() } label: {
             Image(systemName: scheduledDate != nil ? "calendar.badge.clock" : "calendar")
                 .font(.title3)
                 .foregroundStyle(scheduledDate != nil ? Color.accentColor : .secondary)
@@ -69,6 +110,8 @@ struct MessageInputView: View {
             SchedulePickerView(scheduledDate: $scheduledDate)
         }
     }
+
+    // MARK: - Send
 
     private var sendButton: some View {
         Button(action: onSend) {
@@ -90,8 +133,9 @@ struct MessageInputView: View {
         .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty || isSending)
         .keyboardShortcut(.return, modifiers: [])
         .accessibilityLabel(isSending ? "Sending" : scheduledDate != nil ? "Confirm scheduled send" : "Send message")
-        .accessibilityHint(text.isEmpty ? "Type a message first" : "Send '\(text)'")
     }
+
+    // MARK: - Attach panel
 
     private func openAttachPanel() {
         let panel = NSOpenPanel()
@@ -116,29 +160,19 @@ private struct SchedulePickerView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Schedule Message")
-                .font(.headline)
-            DatePicker(
-                "Send at",
-                selection: $pickerDate,
-                in: Date().addingTimeInterval(60)...,
-                displayedComponents: [.date, .hourAndMinute]
-            )
+            Text("Schedule Message").font(.headline)
+            DatePicker("Send at", selection: $pickerDate,
+                       in: Date().addingTimeInterval(60)...,
+                       displayedComponents: [.date, .hourAndMinute])
             HStack {
                 if scheduledDate != nil {
-                    Button("Clear", role: .destructive) {
-                        scheduledDate = nil
-                        dismiss()
-                    }
+                    Button("Clear", role: .destructive) { scheduledDate = nil; dismiss() }
                 }
                 Spacer()
                 Button("Cancel") { dismiss() }
-                Button("Schedule") {
-                    scheduledDate = pickerDate
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                .keyboardShortcut(.return)
+                Button("Schedule") { scheduledDate = pickerDate; dismiss() }
+                    .buttonStyle(.borderedProminent)
+                    .keyboardShortcut(.return)
             }
         }
         .padding(20)

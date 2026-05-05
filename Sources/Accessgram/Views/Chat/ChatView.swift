@@ -231,6 +231,10 @@ struct ChatView: View {
             inputFocused: $inputFocused,
             scheduledDate: $viewModel.scheduledDate,
             onAttach: { url in Task { await viewModel.sendAttachment(url: url) } },
+            onFormattedChange: { text, entities in
+                viewModel.draftText = text
+                viewModel.draftEntities = entities
+            },
             onSend: {
                 if viewModel.editingMessage != nil {
                     Task { await viewModel.submitEdit() }

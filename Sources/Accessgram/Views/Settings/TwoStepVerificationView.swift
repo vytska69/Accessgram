@@ -32,34 +32,36 @@ struct TwoStepVerificationView: View {
         }
         .navigationTitle("Two-Step Verification")
         .task { await vm.load() }
-        .alert("Error", isPresented: Binding(
-            get: { vm.errorMessage != nil },
-            set: { if !$0 { vm.errorMessage = nil } }
-        )) {
-            Button("OK") { vm.errorMessage = nil }
-        } message: {
-            Text(vm.errorMessage ?? "")
-        }
-        .alert("Success", isPresented: Binding(
-            get: { vm.successMessage != nil },
-            set: { if !$0 { vm.successMessage = nil } }
-        )) {
-            Button("OK") { vm.successMessage = nil }
-        } message: {
-            Text(vm.successMessage ?? "")
-        }
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { if !$0 { vm.errorMessage = nil } }
+            ),
+            actions: { Button("OK") { vm.errorMessage = nil } },
+            message: { Text(vm.errorMessage ?? "") }
+        )
+        .alert(
+            "Success",
+            isPresented: Binding(
+                get: { vm.successMessage != nil },
+                set: { if !$0 { vm.successMessage = nil } }
+            ),
+            actions: { Button("OK") { vm.successMessage = nil } },
+            message: { Text(vm.successMessage ?? "") }
+        )
         .confirmationDialog(
             "Disable two-step verification?",
             isPresented: $showRemoveConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Disable", role: .destructive) {
-                Task { await vm.applyPassword(old: oldPassword, new: "", newHint: "") }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("You will no longer need a password when logging in from a new device.")
-        }
+            titleVisibility: .visible,
+            actions: {
+                Button("Disable", role: .destructive) {
+                    Task { await vm.applyPassword(old: oldPassword, new: "", newHint: "") }
+                }
+                Button("Cancel", role: .cancel) {}
+            },
+            message: { Text("You will no longer need a password when logging in from a new device.") }
+        )
     }
 
     private var form: some View {

@@ -48,12 +48,10 @@ struct SettingsView: View {
             isPresented: Binding(
                 get: { vm.errorMessage != nil },
                 set: { if !$0 { vm.errorMessage = nil } }
-            )
-        ) {
-            Button("OK") { vm.errorMessage = nil }
-        } message: {
-            Text(vm.errorMessage ?? "")
-        }
+            ),
+            actions: { Button("OK") { vm.errorMessage = nil } },
+            message: { Text(vm.errorMessage ?? "") }
+        )
         .sheet(isPresented: $showBlockedUsers) {
             BlockedUsersView(client: app.client)
         }
@@ -247,73 +245,6 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Sessions
-
-    @ViewBuilder
-    private func sessionsSection(vm: SettingsViewModel) -> some View {
-        Section {
-            ForEach(vm.sessions) { session in
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text(session.displayName).font(.headline)
-                            if session.isCurrent {
-                                Text("Current")
-                                    .font(.caption2.bold())
-                                    .padding(.horizontal, 6).padding(.vertical, 2)
-                                    .background(Color.accentColor.opacity(0.15))
-                                    .foregroundStyle(Color.accentColor)
-                                    .clipShape(Capsule())
-                            }
-                        }
-                        Text(session.deviceInfo).font(.caption).foregroundStyle(.secondary)
-                        Text(session.lastActiveString).font(.caption2).foregroundStyle(.secondary)
-                        if !session.country.isEmpty {
-                            Text(session.country).font(.caption2).foregroundStyle(.secondary)
-                        }
-                    }
-                    Spacer()
-                    if !session.isCurrent {
-                        Button(role: .destructive) {
-                            Task { await vm.terminateSession(session) }
-                        } label: {
-                            Image(systemName: "xmark.circle")
-                                .foregroundStyle(.red)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Terminate session \(session.displayName)")
-                    }
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel([
-                    session.displayName,
-                    session.deviceInfo,
-                    session.lastActiveString,
-                    session.isCurrent ? "Current device" : ""
-                ].filter { !$0.isEmpty }.joined(separator: ", "))
-            }
-
-            if vm.sessions.filter({ !$0.isCurrent }).count > 1 {
-                Button(role: .destructive) {
-                    showTerminateAllConfirm = true
-                } label: {
-                    Label("Terminate All Other Sessions", systemImage: "rectangle.portrait.and.arrow.right")
-                        .foregroundStyle(.red)
-                }
-            }
-        } header: {
-            HStack {
-                Text("Active Sessions")
-                Spacer()
-                Button { Task { await vm.loadSessions() } } label: {
-                    Image(systemName: "arrow.clockwise").font(.caption)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Refresh sessions")
-            }
-        }
-    }
-
     // MARK: - About
 
     private var aboutSection: some View {
@@ -363,6 +294,75 @@ struct SettingsView: View {
                     .foregroundStyle(.red)
             }
             .accessibilityHint("Sign out of your Telegram account")
+        }
+    }
+}
+
+// MARK: - Sessions section (extension to keep struct body under type_body_length limit)
+
+private extension SettingsView {
+    @ViewBuilder
+    func sessionsSection(vm: SettingsViewModel) -> some View {
+        Section {
+            ForEach(vm.sessions) { session in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(session.displayName).font(.headline)
+                            if session.isCurrent {
+                                Text("Current")
+                                    .font(.caption2.bold())
+                                    .padding(.horizontal, 6).padding(.vertical, 2)
+                                    .background(Color.accentColor.opacity(0.15))
+                                    .foregroundStyle(Color.accentColor)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        Text(session.deviceInfo).font(.caption).foregroundStyle(.secondary)
+                        Text(session.lastActiveString).font(.caption2).foregroundStyle(.secondary)
+                        if !session.country.isEmpty {
+                            Text(session.country).font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    if !session.isCurrent {
+                        Button(role: .destructive) {
+                            Task { await vm.terminateSession(session) }
+                        } label: {
+                            Image(systemName: "xmark.circle")
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Terminate session \(session.displayName)")
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel([
+                    session.displayName,
+                    session.deviceInfo,
+                    session.lastActiveString,
+                    session.isCurrent ? "Current device" : ""
+                ].filter { !$0.isEmpty }.joined(separator: ", "))
+            }
+
+            if vm.sessions.filter { !$0.isCurrent }.count > 1 {
+                Button(role: .destructive) {
+                    showTerminateAllConfirm = true
+                } label: {
+                    Label("Terminate All Other Sessions", systemImage: "rectangle.portrait.and.arrow.right")
+                        .foregroundStyle(.red)
+                }
+            }
+        } header: {
+            HStack {
+                Text("Active Sessions")
+                Spacer()
+                Button(action: { Task { await vm.loadSessions() } }) {
+                    Image(systemName: "arrow.clockwise").font(.caption)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Refresh sessions")
+            }
         }
     }
 }

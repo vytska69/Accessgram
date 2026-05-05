@@ -37,12 +37,10 @@ struct RootView: View {
             isPresented: Binding(
                 get: { app.errorMessage != nil },
                 set: { if !$0 { app.errorMessage = nil } }
-            )
-        ) {
-            Button("OK") { app.errorMessage = nil }
-        } message: {
-            Text(app.errorMessage ?? "")
-        }
+            ),
+            actions: { Button("OK") { app.errorMessage = nil } },
+            message: { Text(app.errorMessage ?? "") }
+        )
     }
 }
 

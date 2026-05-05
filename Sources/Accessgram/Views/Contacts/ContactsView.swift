@@ -43,7 +43,7 @@ struct ContactsView: View {
                 .textFieldStyle(.plain)
                 .accessibilityLabel("Search contacts")
             if !searchQuery.isEmpty {
-                Button { searchQuery = "" } label: {
+                Button(action: { searchQuery = "" }) {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)

@@ -106,9 +106,7 @@ struct BlockedUsersView: View {
                     userRow(user, vm: vm)
                 }
                 if vm.hasMore {
-                    Button {
-                        Task { await vm.loadMore() }
-                    } label: {
+                    Button(action: { Task { await vm.loadMore() } }) {
                         if vm.isLoading {
                             ProgressView().frame(maxWidth: .infinity)
                         } else {
@@ -122,14 +120,15 @@ struct BlockedUsersView: View {
                 }
             }
             .listStyle(.inset)
-            .alert("Error", isPresented: Binding(
-                get: { vm.errorMessage != nil },
-                set: { if !$0 { vm.errorMessage = nil } }
-            )) {
-                Button("OK") { vm.errorMessage = nil }
-            } message: {
-                Text(vm.errorMessage ?? "")
-            }
+            .alert(
+                "Error",
+                isPresented: Binding(
+                    get: { vm.errorMessage != nil },
+                    set: { if !$0 { vm.errorMessage = nil } }
+                ),
+                actions: { Button("OK") { vm.errorMessage = nil } },
+                message: { Text(vm.errorMessage ?? "") }
+            )
         }
     }
 

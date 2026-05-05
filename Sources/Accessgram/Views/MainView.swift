@@ -76,7 +76,7 @@ struct MainView: View {
     }
 
     private var settingsButton: some View {
-        Button { showSettings = true } label: {
+        Button(action: { showSettings = true }) {
             VStack(spacing: 3) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 18, weight: .regular))

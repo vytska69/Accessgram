@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- ── Hardened Runtime (required for notarization) ─────────────────── -->
+
+    <!--
+      TDLib installed via Homebrew is not signed by Apple, so library
+      validation must be disabled.  When embedding TDLib in the app bundle
+      and signing it yourself this key can be removed.
+    -->
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+
+    <!-- ── App Sandbox ───────────────────────────────────────────────────── -->
+
+    <!--
+      Enable this for Mac App Store submission.  Requires TDLib to be
+      embedded in the app bundle (not loaded from Homebrew) and the network
+      + file entitlements below to be present.
+    -->
+    <key>com.apple.security.app-sandbox</key>
+    <false/>
+
+    <!-- Outbound network connections (TDLib → Telegram servers) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!--
+      Files chosen by the user via NSOpenPanel / NSSavePanel.
+      Required for sending photo/document attachments.
+    -->
+    <key>com.apple.security.files.user-selected.read-only</key>
+    <true/>
+
+    <!--
+      Temporary exception: allow read access to ~/Downloads so that
+      files dragged from the Downloads stack can be sent.
+    -->
+    <key>com.apple.security.temporary-exception.files.home-relative-path.read-only</key>
+    <array>
+        <string>/Downloads/</string>
+    </array>
+
+    <!-- ── iCloud ─────────────────────────────────────────────────────────── -->
+
+    <!-- NSUbiquitousKeyValueStore — used by AppPreferences for iCloud sync -->
+    <key>com.apple.developer.ubiquity-kvstore-identifier</key>
+    <string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+
+</dict>
+</plist>

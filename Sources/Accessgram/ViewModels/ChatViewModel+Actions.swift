@@ -91,6 +91,8 @@ extension ChatViewModel {
     // MARK: - Attachment
 
     func sendAttachment(url: URL) async {
+        let accessing = url.startAccessingSecurityScopedResource()
+        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
         let ext = url.pathExtension.lowercased()
         let imageExts = ["jpg", "jpeg", "png", "heic", "gif", "webp"]
         let date = scheduledDate

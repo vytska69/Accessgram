@@ -18,7 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 trace: exception.callStackSymbols
             )
         }
-        Log.write("App launched — v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
+        let sandboxed = ProcessInfo.processInfo.environment["APP_SANDBOX_CONTAINER_ID"] != nil
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        Log.write("App launched — v\(version)\(sandboxed ? " [sandboxed]" : "")")
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

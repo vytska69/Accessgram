@@ -8,12 +8,18 @@ struct PhotoGalleryView: View {
     @Environment(\.dismiss) private var dismiss
 
     private var photoMessages: [Message] {
-        viewModel.messages.filter { if case .photo = $0.content { return true }; return false }
+        viewModel.messages.filter { msg in
+            guard case .photo = msg.content else { return false }
+            return true
+        }
     }
 
     init(messageId: Int64, viewModel: ChatViewModel) {
         self.viewModel = viewModel
-        let photos = viewModel.messages.filter { if case .photo = $0.content { return true }; return false }
+        let photos = viewModel.messages.filter { msg in
+            guard case .photo = msg.content else { return false }
+            return true
+        }
         _currentIndex = State(initialValue: photos.firstIndex(where: { $0.id == messageId }) ?? 0)
     }
 

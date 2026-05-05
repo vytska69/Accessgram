@@ -32,7 +32,7 @@ struct ChatListView: View {
                 .accessibilityLabel("Saved Messages")
             }
             ToolbarItem(placement: .secondaryAction) {
-                Button { searchFocused = true } label: {
+                Button(action: { searchFocused = true }) {
                     Image(systemName: "magnifyingglass")
                 }
                 .accessibilityLabel("Search conversations")
@@ -70,7 +70,7 @@ struct ChatListView: View {
             .accessibilityLabel("Search conversations")
             .accessibilityFocused($searchFocused)
             if !viewModel.searchQuery.isEmpty {
-                Button { viewModel.searchQuery = "" } label: {
+                Button(action: { viewModel.searchQuery = "" }) {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -99,7 +99,7 @@ struct ChatListView: View {
 
     private func folderChip(id: Int?, title: String) -> some View {
         let active = viewModel.activeFolderId == id
-        return Button { viewModel.activeFolderId = id } label: {
+        return Button(action: { viewModel.activeFolderId = id }) {
             Text(title)
                 .font(.caption.bold())
                 .padding(.horizontal, 10)

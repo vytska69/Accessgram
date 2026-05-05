@@ -121,7 +121,7 @@ struct ProfileView: View {
             }
             if let count = vm.memberCount {
                 if chat.type.isGroup || chat.type.isChannel {
-                    Button { showMembers = true } label: {
+                    Button(action: { showMembers = true }) {
                         profileRow(icon: "person.2", label: "Members", value: "\(count)")
                     }
                     .buttonStyle(.plain)

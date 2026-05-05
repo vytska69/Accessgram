@@ -32,7 +32,8 @@ extension TDLibClient {
         chatId: Int64,
         text: String,
         replyToId: Int64? = nil,
-        scheduledDate: Date? = nil
+        scheduledDate: Date? = nil,
+        disableLinkPreview: Bool = false
     ) async throws {
         var params: [String: Any] = [
             "chat_id": chatId,
@@ -51,7 +52,16 @@ extension TDLibClient {
                 "send_date": Int(date.timeIntervalSince1970)
             ]
         }
+        if disableLinkPreview {
+            params["link_preview_options"] = ["@type": "linkPreviewOptions", "is_disabled": true]
+        }
         _ = try await sendRaw("sendMessage", params: params)
+    }
+
+    func getWebPagePreview(text: String) async throws -> [String: Any] {
+        try await sendRaw("getWebPagePreview", params: [
+            "text": ["@type": "formattedText", "text": text, "entities": []]
+        ])
     }
 
     func editMessageText(chatId: Int64, messageId: Int64, text: String) async throws {

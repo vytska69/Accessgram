@@ -178,7 +178,7 @@ Sources/
 - [x] Supergroup/channel member list
 - [x] Message link copying (supergroups/channels)
 - [ ] Rich text formatting in composer (bold, italic, code)
-- [ ] Link preview in outgoing messages
+- [x] Link preview in outgoing messages
 - [x] Drag-and-drop file attachments
 
 ### Missing screens

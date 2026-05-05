@@ -28,6 +28,10 @@ struct ChatView: View {
             messageList
             bottomBar
         }
+        .task(id: viewModel.draftText) {
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            await viewModel.fetchLinkPreviewIfNeeded(for: viewModel.draftText)
+        }
         .onDrop(of: [.fileURL], isTargeted: $isDraggedOver) { providers in
             guard let provider = providers.first else { return false }
             _ = provider.loadObject(ofClass: NSURL.self) { nsurl, _ in
@@ -213,6 +217,9 @@ struct ChatView: View {
             editBar(for: msg)
         } else if let reply = viewModel.replyToMessage {
             ReplyPreviewBar(message: reply) { viewModel.cancelReply() }
+        }
+        if let preview = viewModel.linkPreview {
+            LinkPreviewBar(preview: preview) { viewModel.dismissLinkPreview() }
         }
         if viewModel.scheduledDate != nil {
             scheduledBar

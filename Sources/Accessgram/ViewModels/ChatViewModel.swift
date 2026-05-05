@@ -2,6 +2,25 @@ import AppKit
 import Foundation
 import Observation
 
+struct WebPagePreview {
+    let url: String
+    let siteName: String
+    let title: String
+    let description: String
+
+    init?(json: [String: Any]) {
+        guard let url = json["url"] as? String, !url.isEmpty else { return nil }
+        self.url = url
+        siteName = json["site_name"] as? String ?? ""
+        title = json["title"] as? String ?? ""
+        description = (json["description"] as? [String: Any])?["text"] as? String ?? ""
+    }
+
+    var displayTitle: String {
+        [siteName, title].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
+}
+
 @Observable
 @MainActor
 final class ChatViewModel {
@@ -36,6 +55,11 @@ final class ChatViewModel {
 
     // Cache for messages not in the current history window (used by reply previews)
     var replyCache: [Int64: Message] = [:]
+
+    // Link preview
+    var linkPreview: WebPagePreview?
+    private var linkPreviewURL: String?
+    var linkPreviewDismissed = false
 
     // Downloaded file paths keyed by TDLib file id
     var downloadedPaths: [Int32: String] = [:]
@@ -106,13 +130,51 @@ final class ChatViewModel {
         defer { isSending = false }
         let date = scheduledDate
         scheduledDate = nil
+        let disablePreview = linkPreviewDismissed
+        linkPreview = nil
+        linkPreviewURL = nil
+        linkPreviewDismissed = false
         do {
-            try await client.sendTextMessage(chatId: chat.id, text: text, replyToId: replyToMessage?.id, scheduledDate: date)
+            try await client.sendTextMessage(
+                chatId: chat.id,
+                text: text,
+                replyToId: replyToMessage?.id,
+                scheduledDate: date,
+                disableLinkPreview: disablePreview
+            )
             replyToMessage = nil
         } catch {
             errorMessage = error.localizedDescription
             draftText = text
         }
+    }
+
+    // MARK: - Link Preview
+
+    func fetchLinkPreviewIfNeeded(for text: String) async {
+        guard let url = extractFirstURL(from: text) else {
+            linkPreview = nil
+            linkPreviewURL = nil
+            linkPreviewDismissed = false
+            return
+        }
+        if url != linkPreviewURL { linkPreviewDismissed = false }
+        guard !linkPreviewDismissed, url != linkPreviewURL else { return }
+        guard let json = try? await client.getWebPagePreview(text: text),
+              let preview = WebPagePreview(json: json) else { return }
+        linkPreview = preview
+        linkPreviewURL = url
+    }
+
+    func dismissLinkPreview() {
+        linkPreviewDismissed = true
+        linkPreview = nil
+    }
+
+    private func extractFirstURL(from text: String) -> String? {
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return nil }
+        let range = NSRange(text.startIndex..., in: text)
+        return detector.firstMatch(in: text, range: range)?.url?.absoluteString
     }
 
     // MARK: - Reply / Delete / Copy

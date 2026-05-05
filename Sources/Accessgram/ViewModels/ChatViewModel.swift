@@ -180,7 +180,8 @@ final class ChatViewModel {
     }
 
     private func extractFirstURL(from text: String) -> String? {
-        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return nil }
+        let linkType = NSTextCheckingResult.CheckingType.link.rawValue
+        guard let detector = try? NSDataDetector(types: linkType) else { return nil }
         let range = NSRange(text.startIndex..., in: text)
         return detector.firstMatch(in: text, range: range)?.url?.absoluteString
     }

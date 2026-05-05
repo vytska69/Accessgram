@@ -70,7 +70,7 @@ final class RichNSTextView: NSTextView {
         }
         storage.beginEditing()
         storage.enumerateAttribute(.font, in: range, options: []) { val, sub, _ in
-            let f = (val as? NSFont) ?? .systemFont(ofSize: RichNSTextView.defaultSize)
+            let f = (val as? NSFont) ?? .systemFont(ofSize: Self.defaultSize)
             let new = allHave ? fm.convert(f, toNotHaveTrait: trait)
                               : fm.convert(f, toHaveTrait: trait)
             storage.addAttribute(.font, value: new, range: sub)
@@ -88,7 +88,7 @@ final class RichNSTextView: NSTextView {
         }
         storage.beginEditing()
         storage.enumerateAttribute(.font, in: range, options: []) { val, sub, _ in
-            let size = (val as? NSFont)?.pointSize ?? RichNSTextView.defaultSize
+            let size = (val as? NSFont)?.pointSize ?? Self.defaultSize
             let new: NSFont = allCode
                 ? .systemFont(ofSize: size)
                 : .monospacedSystemFont(ofSize: size, weight: .regular)
@@ -172,7 +172,7 @@ struct RichTextEditor: NSViewRepresentable {
             guard let tv = notification.object as? RichNSTextView,
                   let storage = tv.textStorage else { return }
             let text = storage.string
-            let entities = RichNSTextView.extractEntities(from: storage)
+            let entities = Self.extractEntities(from: storage)
             parent.text = text
             parent.onFormattedChange(text, entities)
         }

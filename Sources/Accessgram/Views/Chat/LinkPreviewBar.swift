@@ -39,6 +39,8 @@ struct LinkPreviewBar: View {
         .padding(.vertical, 8)
         .background(.quinary)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Link preview: \(preview.displayTitle.isEmpty ? preview.url : preview.displayTitle). Button: Dismiss.")
+        .accessibilityLabel(
+            "Link preview: \(preview.displayTitle.isEmpty ? preview.url : preview.displayTitle). Button: Dismiss."
+        )
     }
 }

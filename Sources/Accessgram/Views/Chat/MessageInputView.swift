@@ -84,7 +84,9 @@ struct MessageInputView: View {
         .background(Color(nsColor: .controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .accessibilityLabel("Message input")
-        .accessibilityHint("Type your message. ⌘B bold, ⌘I italic, ⌘E code. Return to send, Shift-Return for a new line.")
+        .accessibilityHint(
+            "Type your message. ⌘B bold, ⌘I italic, ⌘E code. Return to send, Shift-Return for a new line."
+        )
     }
 
     // MARK: - Attach
@@ -165,9 +167,12 @@ private struct SchedulePickerView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Schedule Message").font(.headline)
-            DatePicker("Send at", selection: $pickerDate,
-                       in: Date().addingTimeInterval(60)...,
-                       displayedComponents: [.date, .hourAndMinute])
+            DatePicker(
+                "Send at",
+                selection: $pickerDate,
+                in: Date().addingTimeInterval(60)...,
+                displayedComponents: [.date, .hourAndMinute]
+            )
             HStack {
                 if scheduledDate != nil {
                     Button("Clear", role: .destructive) { scheduledDate = nil; dismiss() }

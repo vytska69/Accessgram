@@ -1,7 +1,6 @@
 import Foundation
 import Observation
 
-// swiftlint:disable type_body_length
 @Observable
 @MainActor
 final class ProfileViewModel {
@@ -133,7 +132,8 @@ final class ProfileViewModel {
             let last = userJSON["last_name"] as? String ?? ""
             let name = [first, last].filter { !$0.isEmpty }.joined(separator: " ")
             let statusType = (memberJSON["status"] as? [String: Any])?["@type"] as? String ?? ""
-            result.append(ChatMember(id: uid, name: name.isEmpty ? "Unknown" : name, role: .init(statusType: statusType)))
+            let memberName = name.isEmpty ? "Unknown" : name
+            result.append(ChatMember(id: uid, name: memberName, role: .init(statusType: statusType)))
         }
         return result
     }
@@ -175,4 +175,3 @@ final class ProfileViewModel {
         try await client.leaveChat(chatId: chatId)
     }
 }
-// swiftlint:enable type_body_length

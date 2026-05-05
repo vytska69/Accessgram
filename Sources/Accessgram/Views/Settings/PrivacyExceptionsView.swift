@@ -61,8 +61,11 @@ private final class PrivacyExceptionsViewModel {
     }
 
     func remove(user: ExceptionUser, fromAllow: Bool) async {
-        if fromAllow { allowList.removeAll { $0.id == user.id } }
-        else { restrictList.removeAll { $0.id == user.id } }
+        if fromAllow {
+            allowList.removeAll { $0.id == user.id }
+        } else {
+            restrictList.removeAll { $0.id == user.id }
+        }
         await save()
     }
 
@@ -99,7 +102,7 @@ struct PrivacyExceptionsView: View {
     let client: TDLibClient
 
     @State private var vm: PrivacyExceptionsViewModel
-    @State private var addingToAllow: Bool? = nil
+    @State private var addingToAllow: Bool?
 
     init(setting: PrivacySetting, client: TDLibClient) {
         self.setting = setting
@@ -117,14 +120,15 @@ struct PrivacyExceptionsView: View {
         }
         .navigationTitle("Exceptions — \(setting.label)")
         .task { await vm.load() }
-        .alert("Error", isPresented: Binding(
-            get: { vm.errorMessage != nil },
-            set: { if !$0 { vm.errorMessage = nil } }
-        )) {
-            Button("OK") { vm.errorMessage = nil }
-        } message: {
-            Text(vm.errorMessage ?? "")
-        }
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { if !$0 { vm.errorMessage = nil } }
+            ),
+            actions: { Button("OK") { vm.errorMessage = nil } },
+            message: { Text(vm.errorMessage ?? "") }
+        )
         .sheet(item: $addingToAllow) { toAllow in
             ContactPickerView(
                 contacts: vm.contacts,

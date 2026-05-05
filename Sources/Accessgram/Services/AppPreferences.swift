@@ -10,10 +10,10 @@ final class AppPreferences {
 
     // MARK: - Preferences
 
-    var showFormatBar: Bool        = true  { didSet { save("showFormatBar",        showFormatBar) } }
-    var compactChatList: Bool      = false { didSet { save("compactChatList",      compactChatList) } }
-    var playSoundOnMessage: Bool   = true  { didSet { save("playSoundOnMessage",   playSoundOnMessage) } }
-    var jumpToLatestOnOpen: Bool   = true  { didSet { save("jumpToLatestOnOpen",   jumpToLatestOnOpen) } }
+    var showFormatBar: Bool = true { didSet { save("showFormatBar", showFormatBar) } }
+    var compactChatList: Bool = false { didSet { save("compactChatList", compactChatList) } }
+    var playSoundOnMessage: Bool = true { didSet { save("playSoundOnMessage", playSoundOnMessage) } }
+    var jumpToLatestOnOpen: Bool = true { didSet { save("jumpToLatestOnOpen", jumpToLatestOnOpen) } }
 
     // MARK: - iCloud status
 
@@ -37,8 +37,8 @@ final class AppPreferences {
     // MARK: - Persistence
 
     private func load() {
-        showFormatBar      = bool("showFormatBar",      default: true)
-        compactChatList    = bool("compactChatList",    default: false)
+        showFormatBar = bool("showFormatBar", default: true)
+        compactChatList = bool("compactChatList", default: false)
         playSoundOnMessage = bool("playSoundOnMessage", default: true)
         jumpToLatestOnOpen = bool("jumpToLatestOnOpen", default: true)
     }

@@ -267,7 +267,9 @@ struct ChatView: View {
         .padding(.vertical, 8)
         .background(.quinary)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Message scheduled for \(viewModel.scheduledDate.map { $0.formatted() } ?? ""). Button: Cancel.")
+        .accessibilityLabel(
+            "Message scheduled for \(viewModel.scheduledDate.map { $0.formatted() } ?? ""). Button: Cancel."
+        )
     }
 
     private func editBar(for message: Message) -> some View {

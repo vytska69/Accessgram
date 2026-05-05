@@ -50,26 +50,27 @@ struct ProfileView: View {
             .padding(32)
         }
         .frame(width: 340, height: 520)
-        .alert("Error", isPresented: Binding(
-            get: { vm.errorMessage != nil },
-            set: { if !$0 { vm.errorMessage = nil } }
-        )) {
-            Button("OK") { vm.errorMessage = nil }
-        } message: {
-            Text(vm.errorMessage ?? "")
-        }
+        .alert(
+            "Error",
+            isPresented: Binding(
+                get: { vm.errorMessage != nil },
+                set: { if !$0 { vm.errorMessage = nil } }
+            ),
+            actions: { Button("OK") { vm.errorMessage = nil } },
+            message: { Text(vm.errorMessage ?? "") }
+        )
         .confirmationDialog(
             "Leave \"\(chat.title)\"?",
             isPresented: $showLeaveConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Leave", role: .destructive) {
-                Task { try? await vm.leaveChat(); dismiss() }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: {
-            Text("You will no longer receive messages from this chat.")
-        }
+            titleVisibility: .visible,
+            actions: {
+                Button("Leave", role: .destructive) {
+                    Task { try? await vm.leaveChat(); dismiss() }
+                }
+                Button("Cancel", role: .cancel) {}
+            },
+            message: { Text("You will no longer receive messages from this chat.") }
+        )
         .sheet(isPresented: $showMembers) {
             MembersView(viewModel: vm, chatTitle: chat.title)
         }

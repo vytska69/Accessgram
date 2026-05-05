@@ -152,7 +152,10 @@ enum MessageContent {
             let lat = loc["latitude"] as? Double ?? 0
             let lon = loc["longitude"] as? Double ?? 0
             let livePeriod = json["live_period"] as? Int ?? 0
-            return livePeriod > 0 ? .liveLocation(latitude: lat, longitude: lon) : .location(latitude: lat, longitude: lon)
+            if livePeriod > 0 {
+                return .liveLocation(latitude: lat, longitude: lon)
+            }
+            return .location(latitude: lat, longitude: lon)
         case "messageContact":
             let c = json["contact"] as? [String: Any] ?? [:]
             return .contact(

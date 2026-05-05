@@ -11,6 +11,7 @@ struct MessageBubbleView: View {
     let onEdit: () -> Void
     let onForward: () -> Void
     let onDelete: () -> Void
+    let onOpenGallery: (() -> Void)?
 
     @State private var photoPath: String?
     @State private var videoPath: String?
@@ -308,6 +309,9 @@ struct MessageBubbleView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: 240)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .onTapGesture { onOpenGallery?() }
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityHint("Open in gallery")
             } else {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8).fill(Color.secondary.opacity(0.2))

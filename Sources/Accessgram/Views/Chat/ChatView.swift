@@ -7,6 +7,7 @@ struct ChatView: View {
     let client: TDLibClient
     @State private var viewModel: ChatViewModel
     @State private var showProfile = false
+    @State private var galleryMessageId: Int64?
     @AccessibilityFocusState private var inputFocused: Bool
     @State private var pendingScrollAnchor: Int64?
     @State private var scrollToBottomTrigger = 0
@@ -58,6 +59,14 @@ struct ChatView: View {
         }
         .sheet(isPresented: $viewModel.showForwardSheet) {
             ForwardView(viewModel: viewModel)
+        }
+        .sheet(isPresented: Binding(
+            get: { galleryMessageId != nil },
+            set: { if !$0 { galleryMessageId = nil } }
+        )) {
+            if let msgId = galleryMessageId {
+                PhotoGalleryView(messageId: msgId, viewModel: viewModel)
+            }
         }
         .task {
             await client.addUpdateHandler { update in
@@ -142,7 +151,10 @@ struct ChatView: View {
                             onReply: { viewModel.startReply(to: message) },
                             onEdit: { viewModel.startEditing(message) },
                             onForward: { viewModel.startForward(message) },
-                            onDelete: { Task { await viewModel.deleteMessage(message, forAll: false) } }
+                            onDelete: { Task { await viewModel.deleteMessage(message, forAll: false) } },
+                            onOpenGallery: {
+                                if case .photo = message.content { galleryMessageId = message.id }
+                            }
                         )
                         .id(message.id)
                     }

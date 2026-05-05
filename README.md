@@ -172,7 +172,7 @@ Sources/
 ### Missing chat features
 - [x] Video playback (tap on video opens in Quick Look or default player)
 - [ ] Image gallery / swipe between photos in the same chat
-- [ ] Inline reply preview loads the full message from the API (currently shows quote text only)
+- [x] Inline reply preview loads the full message from the API (currently shows quote text only)
 - [x] Message scheduling
 - [x] Slow-mode indicator for groups
 - [x] Supergroup/channel member list

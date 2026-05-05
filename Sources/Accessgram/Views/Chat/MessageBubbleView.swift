@@ -48,8 +48,8 @@ struct MessageBubbleView: View {
                         if let fwd = message.forwardOriginName {
                             forwardHeader(from: fwd)
                         }
-                        if let quoteText = message.replyQuoteText {
-                            replyQuote(messageId: message.replyToMessageId, text: quoteText)
+                        if message.replyToMessageId != nil {
+                            replyQuote(messageId: message.replyToMessageId, fallbackText: message.replyQuoteText)
                         }
                         contentView
                         if !message.reactions.isEmpty {
@@ -74,6 +74,11 @@ struct MessageBubbleView: View {
             .accessibilityAction(named: "Edit") { if message.isOutgoing { onEdit() } }
             .accessibilityAction(named: "Forward") { if message.canBeForwarded { onForward() } }
             .accessibilityAction(named: "Delete") { if message.canBeDeleted { onDelete() } }
+            .task {
+                if let replyId = message.replyToMessageId {
+                    await viewModel.ensureReplyMessage(replyId)
+                }
+            }
         }
     }
 
@@ -93,9 +98,19 @@ struct MessageBubbleView: View {
 
     // MARK: - Reply Quote
 
-    private func replyQuote(messageId: Int64?, text: String) -> some View {
-        let replyMsg = messageId.flatMap { id in viewModel.messages.first { $0.id == id } }
-        let senderName = replyMsg.map { $0.isOutgoing ? "You" : $0.senderName }
+    private func replyQuote(messageId: Int64?, fallbackText: String?) -> some View {
+        let replyMsg = messageId.flatMap { id in
+            viewModel.messages.first { $0.id == id } ?? viewModel.replyCache[id]
+        }
+        let senderName: String?
+        let previewText: String
+        if let msg = replyMsg {
+            senderName = msg.isOutgoing ? "You" : msg.senderName
+            previewText = msg.content.previewText
+        } else {
+            senderName = nil
+            previewText = fallbackText ?? "Original message"
+        }
         return HStack(spacing: 6) {
             Rectangle()
                 .fill(Color.accentColor)
@@ -107,7 +122,7 @@ struct MessageBubbleView: View {
                         .foregroundStyle(Color.accentColor)
                         .lineLimit(1)
                 }
-                Text(text)
+                Text(previewText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)

@@ -34,6 +34,9 @@ final class ChatViewModel {
     // Scheduling
     var scheduledDate: Date?
 
+    // Cache for messages not in the current history window (used by reply previews)
+    var replyCache: [Int64: Message] = [:]
+
     // Downloaded file paths keyed by TDLib file id
     var downloadedPaths: [Int32: String] = [:]
 
@@ -206,6 +209,16 @@ final class ChatViewModel {
         if let i = messages.firstIndex(where: { $0.id == id }) {
             messages[i] = updated
         }
+    }
+
+    // MARK: - Reply Message Fetching
+
+    func ensureReplyMessage(_ id: Int64) async {
+        guard replyCache[id] == nil, !messages.contains(where: { $0.id == id }) else { return }
+        guard let raw = try? await client.getMessage(chatId: chat.id, messageId: id),
+              let tdMsg = TDMessage(json: raw) else { return }
+        let resolved = await resolveSenderName(for: Message(tdMessage: tdMsg))
+        replyCache[id] = resolved
     }
 
     // MARK: - Sender Name Resolution

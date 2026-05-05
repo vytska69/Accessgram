@@ -45,13 +45,14 @@ enum PrivacyValue: String, CaseIterable, Identifiable {
     }
 }
 
-enum PrivacySetting: String {
+enum PrivacySetting: String, Identifiable {
     case lastSeen = "userPrivacySettingShowStatus"
     case profilePhoto = "userPrivacySettingShowProfilePhoto"
     case calls = "userPrivacySettingAllowCalls"
     case groupInvites = "userPrivacySettingAllowChatInvites"
     case forwards = "userPrivacySettingShowLinkInForwardedMessages"
 
+    var id: String { rawValue }
     var label: String {
         switch self {
         case .lastSeen: return "Last Seen & Online"
@@ -61,6 +62,12 @@ enum PrivacySetting: String {
         case .forwards:     return "Forwarded Messages"
         }
     }
+}
+
+struct PrivacyExceptions {
+    var allowUserIds: [Int64] = []
+    var restrictUserIds: [Int64] = []
+    var isEmpty: Bool { allowUserIds.isEmpty && restrictUserIds.isEmpty }
 }
 
 // MARK: - Session
@@ -134,18 +141,53 @@ extension TDLibClient {
     // MARK: Privacy
 
     func getPrivacySettingRules(setting: PrivacySetting) async throws -> PrivacyValue {
+        let (value, _) = try await getPrivacyRules(setting: setting)
+        return value
+    }
+
+    func getPrivacyRules(setting: PrivacySetting) async throws -> (PrivacyValue, PrivacyExceptions) {
         let resp = try await sendRaw("getUserPrivacySettingRules", params: [
             "setting": ["@type": setting.rawValue]
         ])
         let rules = resp["rules"] as? [[String: Any]] ?? []
-        let firstType = rules.first?["@type"] as? String ?? ""
-        return PrivacyValue(rawValue: firstType) ?? .everybody
+        var value: PrivacyValue = .everybody
+        var exceptions = PrivacyExceptions()
+        for rule in rules {
+            guard let type = rule["@type"] as? String else { continue }
+            switch type {
+            case "userPrivacySettingRuleAllowAll":        value = .everybody
+            case "userPrivacySettingRuleAllowContacts":   value = .contacts
+            case "userPrivacySettingRuleRestrictAll":     value = .nobody
+            case "userPrivacySettingRuleAllowUsers":
+                exceptions.allowUserIds = rule["user_ids"] as? [Int64] ?? []
+            case "userPrivacySettingRuleRestrictUsers":
+                exceptions.restrictUserIds = rule["user_ids"] as? [Int64] ?? []
+            default: break
+            }
+        }
+        return (value, exceptions)
     }
 
     func setPrivacySettingRules(setting: PrivacySetting, value: PrivacyValue) async throws {
+        try await setPrivacyRules(setting: setting, value: value, exceptions: PrivacyExceptions())
+    }
+
+    func setPrivacyRules(
+        setting: PrivacySetting,
+        value: PrivacyValue,
+        exceptions: PrivacyExceptions
+    ) async throws {
+        var rulesArray: [[String: Any]] = []
+        if !exceptions.allowUserIds.isEmpty {
+            rulesArray.append(["@type": "userPrivacySettingRuleAllowUsers", "user_ids": exceptions.allowUserIds])
+        }
+        if !exceptions.restrictUserIds.isEmpty {
+            rulesArray.append(["@type": "userPrivacySettingRuleRestrictUsers", "user_ids": exceptions.restrictUserIds])
+        }
+        rulesArray.append(["@type": value.rawValue])
         _ = try await sendRaw("setUserPrivacySettingRules", params: [
             "setting": ["@type": setting.rawValue],
-            "rules": ["rules": [["@type": value.rawValue]]]
+            "rules": ["rules": rulesArray]
         ])
     }
 

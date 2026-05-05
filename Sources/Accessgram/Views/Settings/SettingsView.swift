@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var showTerminateAllConfirm = false
     @State private var showBlockedUsers = false
     @State private var showTwoStepVerification = false
+    @State private var privacyExceptionSetting: PrivacySetting?
 
     var body: some View {
         Group {
@@ -60,6 +61,12 @@ struct SettingsView: View {
                 TwoStepVerificationView(client: app.client)
             }
             .frame(minWidth: 380, minHeight: 480)
+        }
+        .sheet(item: $privacyExceptionSetting) { setting in
+            NavigationStack {
+                PrivacyExceptionsView(setting: setting, client: app.client)
+            }
+            .frame(minWidth: 380, minHeight: 420)
         }
         .confirmationDialog("Log out of Telegram?", isPresented: $showLogOutConfirm, titleVisibility: .visible) {
             Button("Log Out", role: .destructive) { Task { await app.logOut() } }
@@ -164,6 +171,15 @@ struct SettingsView: View {
                 HStack {
                     Text(key.label)
                     Spacer()
+                    Button {
+                        privacyExceptionSetting = key
+                    } label: {
+                        Image(systemName: "person.2.badge.gearshape")
+                            .foregroundStyle(.secondary)
+                            .font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Edit exceptions for \(key.label)")
                     Picker("", selection: Binding(
                         get: { vm.privacyValues[key] ?? .everybody },
                         set: { v in Task { await vm.setPrivacy(setting: key, value: v) } }

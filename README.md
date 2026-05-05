@@ -188,7 +188,7 @@ Sources/
 - [x] Notification settings per individual chat (not just scope)
 - [x] Blocked users list
 - [x] Two-step verification settings
-- [ ] Privacy exceptions (allow/deny specific users)
+- [x] Privacy exceptions (allow/deny specific users)
 
 ### Platform / infrastructure
 - [ ] Push notifications via Apple Push Notification service (currently polls)

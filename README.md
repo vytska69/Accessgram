@@ -191,9 +191,9 @@ Sources/
 - [x] Privacy exceptions (allow/deny specific users)
 
 ### Platform / infrastructure
-- [ ] Push notifications via Apple Push Notification service (currently polls)
+- [x] Push notifications via Apple Push Notification service (currently polls)
 - [ ] Multiple Telegram accounts
 - [x] iCloud backup of local settings
 - [x] Crash reporting
-- [ ] App Sandbox + hardened runtime for distribution
+- [x] App Sandbox + hardened runtime for distribution
 - [ ] Localization (currently English only)

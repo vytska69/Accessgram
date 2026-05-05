@@ -154,6 +154,32 @@ final class AppViewModel {
         }
     }
 
+    // MARK: - APNs
+
+    func registerAPNsToken(_ token: Data) async {
+        #if DEBUG
+        let isSandbox = true
+        #else
+        let isSandbox = false
+        #endif
+        do {
+            try await client.registerDevice(apnsToken: token, isSandbox: isSandbox)
+            Log.write("APNs token registered with TDLib (\(token.count) bytes)")
+        } catch {
+            Log.write("APNs registerDevice failed: \(error.localizedDescription)")
+        }
+    }
+
+    func processPush(_ userInfo: [String: Any]) async {
+        guard let data = try? JSONSerialization.data(withJSONObject: userInfo),
+              let payload = String(data: data, encoding: .utf8) else { return }
+        do {
+            try await client.processPushNotification(payload: payload)
+        } catch {
+            Log.write("processPushNotification error: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - Auth Actions
 
     func submitPhone(_ phone: String) async {

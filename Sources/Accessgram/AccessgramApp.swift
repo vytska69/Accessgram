@@ -5,9 +5,12 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     // Held for the app lifetime — releasing it re-enables App Nap.
     private var backgroundActivity: NSObjectProtocol?
+    // Set from AccessgramApp.body once the view model is ready.
+    weak var appViewModel: AppViewModel?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NotificationService.shared.requestPermission()
+        NSApplication.shared.registerForRemoteNotifications()
         backgroundActivity = ProcessInfo.processInfo.beginActivity(
             options: [.background, .userInitiatedAllowingIdleSystemSleep],
             reason: "Receiving Telegram messages"
@@ -26,6 +29,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }
+
+    // MARK: - APNs
+
+    func application(_ application: NSApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Log.write("APNs registered — token received (\(deviceToken.count) bytes)")
+        Task { await appViewModel?.registerAPNsToken(deviceToken) }
+    }
+
+    func application(_ application: NSApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        Log.write("APNs registration failed: \(error.localizedDescription)")
+    }
+
+    func application(_ application: NSApplication, didReceiveRemoteNotification userInfo: [String: Any]) {
+        Log.write("APNs background push received")
+        Task { await appViewModel?.processPush(userInfo) }
+    }
 }
 
 @main
@@ -37,6 +56,7 @@ struct AccessgramApp: App {
         WindowGroup {
             RootView()
                 .environment(appViewModel)
+                .onAppear { appDelegate.appViewModel = appViewModel }
         }
         .windowStyle(.titleBar)
         .windowResizability(.contentSize)

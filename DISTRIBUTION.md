@@ -99,6 +99,7 @@ loaded from Homebrew.
 | `network.client` | `true` | TDLib outbound connections to Telegram servers |
 | `files.user-selected.read-only` | `true` | File attachment picker |
 | `ubiquity-kvstore-identifier` | team + bundle ID | iCloud KV store for AppPreferences |
+| `aps-environment` | `development` / `production` | APNs push notifications |
 
 ---
 

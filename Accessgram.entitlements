@@ -42,6 +42,15 @@
         <string>/Downloads/</string>
     </array>
 
+    <!-- ── Push Notifications ───────────────────────────────────────────── -->
+
+    <!--
+      Required to receive APNs push notifications.
+      Use "development" for debug builds, "production" for release/notarized.
+    -->
+    <key>com.apple.developer.aps-environment</key>
+    <string>development</string>
+
     <!-- ── iCloud ─────────────────────────────────────────────────────────── -->
 
     <!-- NSUbiquitousKeyValueStore — used by AppPreferences for iCloud sync -->

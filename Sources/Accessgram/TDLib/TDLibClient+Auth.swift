@@ -52,6 +52,22 @@ extension TDLibClient {
         ])
     }
 
+    func registerDevice(apnsToken: Data, isSandbox: Bool) async throws {
+        let hexToken = apnsToken.map { String(format: "%02x", $0) }.joined()
+        _ = try await sendRaw("registerDevice", params: [
+            "device_token": [
+                "@type": "deviceTokenApplePush",
+                "device_token": hexToken,
+                "is_app_sandbox": isSandbox
+            ],
+            "other_user_ids": []
+        ])
+    }
+
+    func processPushNotification(payload: String) async throws {
+        _ = try await sendRaw("processPushNotification", params: ["payload": payload])
+    }
+
     func getBlockedMessageSenders(offset: Int = 0, limit: Int = 20) async throws -> [MessageSender] {
         let resp = try await sendRaw("getBlockedMessageSenders", params: [
             "block_list": ["@type": "blockListMain"],

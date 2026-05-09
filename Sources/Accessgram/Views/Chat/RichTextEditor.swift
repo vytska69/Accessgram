@@ -7,9 +7,9 @@ import SwiftUI
 @MainActor
 final class RichTextEditorContext {
     weak var textView: RichNSTextView?
-    func bold()   { textView?.toggleTrait(.boldFontMask) }
+    func bold() { textView?.toggleTrait(.boldFontMask) }
     func italic() { textView?.toggleTrait(.italicFontMask) }
-    func code()   { textView?.toggleCode() }
+    func code() { textView?.toggleCode() }
 }
 
 // MARK: - Custom NSTextView

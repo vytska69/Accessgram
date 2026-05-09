@@ -171,9 +171,13 @@ struct PrivacyExceptionsView: View {
                 HStack {
                     Text(user.name)
                     Spacer()
-                    Button(role: .destructive, action: { Task { await vm.remove(user: user, fromAllow: isAllow) } }, label: {
-                        Image(systemName: "minus.circle.fill").foregroundStyle(.red)
-                    })
+                    Button(
+                        role: .destructive,
+                        action: { Task { await vm.remove(user: user, fromAllow: isAllow) } },
+                        label: {
+                            Image(systemName: "minus.circle.fill").foregroundStyle(.red)
+                        }
+                    )
                     .buttonStyle(.plain)
                     .accessibilityLabel("Remove \(user.name) from \(isAllow ? "always allow" : "always restrict")")
                 }

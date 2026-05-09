@@ -76,7 +76,13 @@ struct TwoStepVerificationView: View {
     }
 
     private var statusSection: some View {
-        Section {
+        Section(header: { Text("Status") }, footer: {
+            Text(
+                vm.hasPassword
+                    ? "A password is required when logging in from a new device."
+                    : "Add a password as an extra layer of security for your account."
+            )
+        }) {
             HStack(spacing: 12) {
                 Image(systemName: vm.hasPassword ? "lock.fill" : "lock.open")
                     .foregroundStyle(vm.hasPassword ? .green : .secondary)
@@ -98,14 +104,6 @@ struct TwoStepVerificationView: View {
                 vm.hasPassword
                     ? "Two-step verification enabled\(vm.hint.isEmpty ? "" : ", hint: \(vm.hint)")"
                     : "Two-step verification disabled"
-            )
-        } header: {
-            Text("Status")
-        } footer: {
-            Text(
-                vm.hasPassword
-                    ? "A password is required when logging in from a new device."
-                    : "Add a password as an extra layer of security for your account."
             )
         }
     }

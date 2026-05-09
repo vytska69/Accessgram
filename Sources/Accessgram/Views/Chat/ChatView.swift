@@ -92,9 +92,7 @@ struct ChatView: View {
     // MARK: - Pinned Banner
 
     private func pinnedBanner(_ message: Message) -> some View {
-        PinnedMessageBanner(message: message) {
-            // scroll handled by id — no-op for now
-        } onDismiss: {
+        PinnedMessageBanner(message: message, onTap: {}) {
             viewModel.pinnedMessage = nil
         }
     }

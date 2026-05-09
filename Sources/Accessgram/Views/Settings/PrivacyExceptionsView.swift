@@ -166,7 +166,7 @@ struct PrivacyExceptionsView: View {
         users: [PrivacyExceptionsViewModel.ExceptionUser],
         isAllow: Bool
     ) -> some View {
-        Section {
+        Section(header: { Text(title) }, footer: { Text(footer) }) {
             ForEach(users) { user in
                 HStack {
                     Text(user.name)
@@ -182,10 +182,6 @@ struct PrivacyExceptionsView: View {
                 Label("Add User…", systemImage: "plus.circle")
             }
             .accessibilityLabel("Add user to \(isAllow ? "always allow" : "always restrict") list")
-        } header: {
-            Text(title)
-        } footer: {
-            Text(footer)
         }
     }
 }

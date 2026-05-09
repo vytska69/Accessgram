@@ -117,7 +117,25 @@ struct SettingsView: View {
 
     private var generalSection: some View {
         let prefs = AppPreferences.shared
-        return Section {
+        return Section(header: {
+            HStack {
+                Text("General")
+                Spacer()
+                if prefs.iCloudAvailable {
+                    Label("iCloud", systemImage: "icloud")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Local only")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }, footer: {
+            Text(prefs.iCloudAvailable
+                 ? "Preferences are synced across your devices via iCloud."
+                 : "Sign into iCloud in System Settings to sync preferences across devices.")
+        }) {
             Toggle("Show Format Bar", isOn: Binding(
                 get: { prefs.showFormatBar },
                 set: { prefs.showFormatBar = $0 }
@@ -141,24 +159,6 @@ struct SettingsView: View {
                 set: { prefs.jumpToLatestOnOpen = $0 }
             ))
             .accessibilityLabel("Scroll to the newest message when opening a chat")
-        } header: {
-            HStack {
-                Text("General")
-                Spacer()
-                if prefs.iCloudAvailable {
-                    Label("iCloud", systemImage: "icloud")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("Local only")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        } footer: {
-            Text(prefs.iCloudAvailable
-                 ? "Preferences are synced across your devices via iCloud."
-                 : "Sign into iCloud in System Settings to sync preferences across devices.")
         }
     }
 
@@ -293,7 +293,17 @@ struct SettingsView: View {
 private extension SettingsView {
     @ViewBuilder
     func sessionsSection(vm: SettingsViewModel) -> some View {
-        Section {
+        Section(header: {
+            HStack {
+                Text("Active Sessions")
+                Spacer()
+                Button(action: { Task { await vm.loadSessions() } }) {
+                    Image(systemName: "arrow.clockwise").font(.caption)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Refresh sessions")
+            }
+        }) {
             ForEach(vm.sessions) { session in
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
@@ -338,16 +348,6 @@ private extension SettingsView {
                     Label("Terminate All Other Sessions", systemImage: "rectangle.portrait.and.arrow.right")
                         .foregroundStyle(.red)
                 }
-            }
-        } header: {
-            HStack {
-                Text("Active Sessions")
-                Spacer()
-                Button(action: { Task { await vm.loadSessions() } }) {
-                    Image(systemName: "arrow.clockwise").font(.caption)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Refresh sessions")
             }
         }
     }

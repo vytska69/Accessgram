@@ -20,10 +20,10 @@ struct MainView: View {
         let selectedChat = selectedChatId.flatMap { id in
             app.chatListViewModel.chats.first { $0.id == id }
         }
-        NavigationSplitView {
+        NavigationSplitView(sidebar: {
             sidebar
                 .navigationSplitViewColumnWidth(min: 270, ideal: 320, max: 420)
-        } detail: {
+        }) {
             detailContent(for: selectedChat)
         }
         .sheet(isPresented: $showNewChat) {

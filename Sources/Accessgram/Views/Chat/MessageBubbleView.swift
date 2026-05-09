@@ -145,7 +145,7 @@ struct MessageBubbleView: View {
                             await viewModel.addReaction(emoji: reaction.emoji, to: message)
                         }
                     }
-                }) {
+                }, label: {
                     HStack(spacing: 2) {
                         Text(reaction.emoji).font(.caption)
                         Text("\(reaction.count)").font(.caption2)
@@ -156,7 +156,7 @@ struct MessageBubbleView: View {
                         ? Color.accentColor.opacity(0.2)
                         : Color.secondary.opacity(0.1))
                     .clipShape(Capsule())
-                }
+                })
                 .buttonStyle(.plain)
                 .accessibilityLabel("\(reaction.emoji) \(reaction.count)")
                 .accessibilityHint(reaction.isChosen ? "Tap to remove reaction" : "Tap to add reaction")
@@ -203,14 +203,14 @@ struct MessageBubbleView: View {
                 if let url = URL(string: "maps://?ll=\(q)&q=Location") {
                     NSWorkspace.shared.open(url)
                 }
-            }) {
+            }, label: {
                 VStack(alignment: .leading, spacing: 4) {
                     Label(String(format: "%.5f, %.5f", lat, lon), systemImage: "mappin.circle.fill")
                     Text("Open in Maps")
                         .font(.caption)
                         .foregroundStyle(Color.accentColor)
                 }
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel(String(format: "Location %.5f, %.5f. Open in Maps.", lat, lon))
         case .liveLocation(let lat, let lon):
@@ -219,7 +219,7 @@ struct MessageBubbleView: View {
                 if let url = URL(string: "maps://?ll=\(q)&q=Location") {
                     NSWorkspace.shared.open(url)
                 }
-            }) {
+            }, label: {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Label(String(format: "%.5f, %.5f", lat, lon), systemImage: "location.fill")
@@ -235,7 +235,7 @@ struct MessageBubbleView: View {
                         .font(.caption)
                         .foregroundStyle(Color.accentColor)
                 }
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel(String(format: "Live location %.5f, %.5f. Open in Maps.", lat, lon))
         case .contact(let first, let last, let phone):
@@ -357,11 +357,11 @@ struct MessageBubbleView: View {
     @ViewBuilder
     private func videoControls(file: TDFile?, duration: Int) -> some View {
         if let path = videoPath ?? file?.localPath {
-            Button(action: { viewModel.openFile(at: path) }) {
+            Button(action: { viewModel.openFile(at: path) }, label: {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 44))
                     .foregroundStyle(.white)
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel("Play video, \(tdFormatDuration(duration))")
         } else if isDownloadingVideo {
@@ -374,11 +374,11 @@ struct MessageBubbleView: View {
                     videoPath = viewModel.localPath(for: file)
                     isDownloadingVideo = false
                 }
-            }) {
+            }, label: {
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.system(size: 44))
                     .foregroundStyle(.white)
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel("Download video, \(tdFormatDuration(duration))")
         } else {
@@ -411,15 +411,15 @@ struct MessageBubbleView: View {
             Spacer()
             if let file {
                 if let path = viewModel.localPath(for: file) {
-                    Button(action: { viewModel.openFile(at: path) }) {
+                    Button(action: { viewModel.openFile(at: path) }, label: {
                         Image(systemName: "arrow.up.forward.square")
-                    }
+                    })
                     .buttonStyle(.plain)
                     .accessibilityLabel("Open file")
                 } else {
-                    Button(action: { Task { await viewModel.downloadFile(file) } }) {
+                    Button(action: { Task { await viewModel.downloadFile(file) } }, label: {
                         Image(systemName: "arrow.down.circle")
-                    }
+                    })
                     .buttonStyle(.plain)
                     .accessibilityLabel("Download file")
                 }

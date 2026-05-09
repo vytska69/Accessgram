@@ -27,11 +27,11 @@ struct BubbleAudioPlayerView: View {
         let elapsed = Int(audioProgress * Double(max(duration, 1)))
         VStack(spacing: 4) {
             HStack(spacing: 8) {
-                Button(action: { Task { await toggleAudio() } }) {
+                Button(action: { Task { await toggleAudio() } }, label: {
                     Image(systemName: isPlayingAudio ? "pause.circle.fill" : "play.circle.fill")
                         .font(.title2)
                         .foregroundStyle(Color.accentColor)
-                }
+                })
                 .buttonStyle(.plain)
                 .accessibilityLabel(isPlayingAudio ? "Pause" : "Play")
 
@@ -48,11 +48,11 @@ struct BubbleAudioPlayerView: View {
                 .accessibilityLabel("Playback position")
                 .accessibilityValue("\(formatSeconds(elapsed)) of \(formatSeconds(duration))")
 
-                Button(action: { cycleSpeed() }) {
+                Button(action: { cycleSpeed() }, label: {
                     Text(speedLabel)
                         .font(.caption.bold().monospacedDigit())
                         .frame(minWidth: 30)
-                }
+                })
                 .buttonStyle(.plain)
                 .accessibilityLabel("Playback speed \(speedLabel)")
                 .accessibilityHint("Double-tap to change speed")

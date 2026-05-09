@@ -43,9 +43,9 @@ struct ContactsView: View {
                 .textFieldStyle(.plain)
                 .accessibilityLabel("Search contacts")
             if !searchQuery.isEmpty {
-                Button(action: { searchQuery = "" }) {
+                Button(action: { searchQuery = "" }, label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                }
+                })
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear search")
             }
@@ -77,7 +77,7 @@ struct ContactsView: View {
             )
         } else {
             List(filtered) { contact in
-                Button(action: { openChat(userId: contact.id) }) {
+                Button(action: { openChat(userId: contact.id) }, label: {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(contact.name).font(.headline)
                         if !contact.username.isEmpty {
@@ -87,7 +87,7 @@ struct ContactsView: View {
                             Text("+\(contact.phone)").font(.caption).foregroundStyle(.secondary)
                         }
                     }
-                }
+                })
                 .buttonStyle(.plain)
                 .accessibilityLabel(
                     [contact.name,

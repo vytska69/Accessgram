@@ -121,9 +121,9 @@ struct ProfileView: View {
             }
             if let count = vm.memberCount {
                 if chat.type.isGroup || chat.type.isChannel {
-                    Button(action: { showMembers = true }) {
+                    Button(action: { showMembers = true }, label: {
                         profileRow(icon: "person.2", label: "Members", value: "\(count)")
-                    }
+                    })
                     .buttonStyle(.plain)
                     .accessibilityLabel("Members: \(count). Tap to view list.")
                 } else {
@@ -142,10 +142,10 @@ struct ProfileView: View {
     private func actionsSection(vm: ProfileViewModel) -> some View {
         VStack(spacing: 8) {
             if vm.isMuted {
-                Button(action: { Task { await vm.unmute() } }) {
+                Button(action: { Task { await vm.unmute() } }, label: {
                     Label("Unmute", systemImage: "bell")
                         .frame(maxWidth: .infinity)
-                }
+                })
                 .buttonStyle(.bordered)
                 .accessibilityLabel("Unmute chat")
             } else {
@@ -164,23 +164,23 @@ struct ProfileView: View {
             }
 
             if case .private = chat.type {
-                Button(action: { showBlockConfirm = true }) {
+                Button(action: { showBlockConfirm = true }, label: {
                     Label(
                         vm.isBlocked ? "Unblock" : "Block",
                         systemImage: vm.isBlocked ? "hand.raised.slash" : "hand.raised"
                     )
                     .frame(maxWidth: .infinity)
-                }
+                })
                 .buttonStyle(.bordered)
                 .tint(vm.isBlocked ? nil : .red)
                 .accessibilityLabel(vm.isBlocked ? "Unblock contact" : "Block contact")
             }
 
             if canLeave {
-                Button(role: .destructive, action: { showLeaveConfirm = true }) {
+                Button(role: .destructive, action: { showLeaveConfirm = true }, label: {
                     Label("Leave", systemImage: "rectangle.portrait.and.arrow.right")
                         .frame(maxWidth: .infinity)
-                }
+                })
                 .buttonStyle(.bordered)
                 .tint(.red)
                 .accessibilityLabel("Leave \(chat.title)")

@@ -32,9 +32,9 @@ struct ChatListView: View {
                 .accessibilityLabel("Saved Messages")
             }
             ToolbarItem(placement: .secondaryAction) {
-                Button(action: { searchFocused = true }) {
+                Button(action: { searchFocused = true }, label: {
                     Image(systemName: "magnifyingglass")
-                }
+                })
                 .accessibilityLabel("Search conversations")
                 .keyboardShortcut("f", modifiers: .command)
             }
@@ -70,9 +70,9 @@ struct ChatListView: View {
             .accessibilityLabel("Search conversations")
             .accessibilityFocused($searchFocused)
             if !viewModel.searchQuery.isEmpty {
-                Button(action: { viewModel.searchQuery = "" }) {
+                Button(action: { viewModel.searchQuery = "" }, label: {
                     Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                }
+                })
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear search")
             }
@@ -99,7 +99,7 @@ struct ChatListView: View {
 
     private func folderChip(id: Int?, title: String) -> some View {
         let active = viewModel.activeFolderId == id
-        return Button(action: { viewModel.activeFolderId = id }) {
+        return Button(action: { viewModel.activeFolderId = id }, label: {
             Text(title)
                 .font(.caption.bold())
                 .padding(.horizontal, 10)
@@ -107,7 +107,7 @@ struct ChatListView: View {
                 .background(active ? Color.accentColor : Color.secondary.opacity(0.12))
                 .foregroundStyle(active ? .white : .primary)
                 .clipShape(Capsule())
-        }
+        })
         .buttonStyle(.plain)
         .accessibilityLabel("\(title)\(active ? ", selected" : "")")
     }
@@ -154,7 +154,7 @@ struct ChatListView: View {
                         .padding(.vertical, 8)
                 } else {
                     ForEach(viewModel.messageSearchResults) { result in
-                        Button(action: { selectedChatId = result.chatId }) {
+                        Button(action: { selectedChatId = result.chatId }, label: {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack {
                                     Text(result.chatTitle)
@@ -170,7 +170,7 @@ struct ChatListView: View {
                                     .lineLimit(1)
                             }
                             .padding(.vertical, 2)
-                        }
+                        })
                         .buttonStyle(.plain)
                         .accessibilityLabel("\(result.chatTitle): \(result.preview)")
                     }

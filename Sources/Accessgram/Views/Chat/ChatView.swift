@@ -92,9 +92,7 @@ struct ChatView: View {
     // MARK: - Pinned Banner
 
     private func pinnedBanner(_ message: Message) -> some View {
-        PinnedMessageBanner(message: message, onTap: {}) {
-            viewModel.pinnedMessage = nil
-        }
+        PinnedMessageBanner(message: message, onTap: {}, onDismiss: { viewModel.pinnedMessage = nil })
     }
 
     // MARK: - Search Bar
@@ -113,9 +111,9 @@ struct ChatView: View {
                 viewModel.showSearch = false
                 viewModel.searchQuery = ""
                 viewModel.searchResults = []
-            }) {
+            }, label: {
                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel("Close search")
         }
@@ -193,13 +191,13 @@ struct ChatView: View {
             Button(action: {
                 pendingScrollAnchor = viewModel.messages.first?.id
                 Task { await viewModel.loadOlderMessages() }
-            }) {
+            }, label: {
                 if viewModel.isLoadingMore {
                     ProgressView().scaleEffect(0.7)
                 } else {
                     Text("Load older messages").font(.caption).foregroundStyle(.secondary)
                 }
-            }
+            })
             .buttonStyle(.plain)
             .padding(.vertical, 4)
         }
@@ -253,9 +251,9 @@ struct ChatView: View {
                 }
             }
             Spacer()
-            Button(action: { viewModel.scheduledDate = nil }) {
+            Button(action: { viewModel.scheduledDate = nil }, label: {
                 Image(systemName: "xmark").font(.caption.bold())
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel("Cancel scheduled send")
         }
@@ -294,29 +292,29 @@ struct ChatView: View {
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
-            Button(action: { inputFocused = true }) {
+            Button(action: { inputFocused = true }, label: {
                 Image(systemName: "square.and.pencil")
-            }
+            })
             .accessibilityLabel("Focus message input")
             .keyboardShortcut("n", modifiers: .command)
         }
         ToolbarItem(placement: .primaryAction) {
-            Button(action: { scrollToBottomTrigger += 1 }) {
+            Button(action: { scrollToBottomTrigger += 1 }, label: {
                 Image(systemName: "arrow.down.to.line")
-            }
+            })
             .accessibilityLabel("Jump to latest message")
         }
         ToolbarItem(placement: .primaryAction) {
-            Button(action: { viewModel.showSearch.toggle() }) {
+            Button(action: { viewModel.showSearch.toggle() }, label: {
                 Image(systemName: "magnifyingglass")
-            }
+            })
             .accessibilityLabel("Search in chat")
             .keyboardShortcut("f", modifiers: .command)
         }
         ToolbarItem(placement: .primaryAction) {
-            Button(action: { showProfile = true }) {
+            Button(action: { showProfile = true }, label: {
                 Image(systemName: "person.circle")
-            }
+            })
             .accessibilityLabel("View profile")
         }
     }

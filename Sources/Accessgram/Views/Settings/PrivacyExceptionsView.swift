@@ -166,21 +166,21 @@ struct PrivacyExceptionsView: View {
         users: [PrivacyExceptionsViewModel.ExceptionUser],
         isAllow: Bool
     ) -> some View {
-        Section(header: { Text(title) }, footer: { Text(footer) }) {
+        Section(header: Text(title), footer: Text(footer)) {
             ForEach(users) { user in
                 HStack {
                     Text(user.name)
                     Spacer()
-                    Button(role: .destructive, action: { Task { await vm.remove(user: user, fromAllow: isAllow) } }) {
+                    Button(role: .destructive, action: { Task { await vm.remove(user: user, fromAllow: isAllow) } }, label: {
                         Image(systemName: "minus.circle.fill").foregroundStyle(.red)
-                    }
+                    })
                     .buttonStyle(.plain)
                     .accessibilityLabel("Remove \(user.name) from \(isAllow ? "always allow" : "always restrict")")
                 }
             }
-            Button(action: { addingToAllow = isAllow }) {
+            Button(action: { addingToAllow = isAllow }, label: {
                 Label("Add User…", systemImage: "plus.circle")
-            }
+            })
             .accessibilityLabel("Add user to \(isAllow ? "always allow" : "always restrict") list")
         }
     }
@@ -225,10 +225,10 @@ private struct ContactPickerView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                 List(filtered) { user in
-                    Button(action: { onSelect(user); dismiss() }) {
+                    Button(action: { onSelect(user); dismiss() }, label: {
                         Text(user.name)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                    })
                     .buttonStyle(.plain)
                 }
             }

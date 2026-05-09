@@ -20,12 +20,15 @@ struct MainView: View {
         let selectedChat = selectedChatId.flatMap { id in
             app.chatListViewModel.chats.first { $0.id == id }
         }
-        NavigationSplitView(sidebar: {
-            sidebar
-                .navigationSplitViewColumnWidth(min: 270, ideal: 320, max: 420)
-        }) {
-            detailContent(for: selectedChat)
-        }
+        NavigationSplitView(
+            sidebar: {
+                sidebar
+                    .navigationSplitViewColumnWidth(min: 270, ideal: 320, max: 420)
+            },
+            detail: {
+                detailContent(for: selectedChat)
+            }
+        )
         .sheet(isPresented: $showNewChat) {
             NewChatView(selectedChatId: $selectedChatId).environment(app)
         }
@@ -76,7 +79,7 @@ struct MainView: View {
     }
 
     private var settingsButton: some View {
-        Button(action: { showSettings = true }) {
+        Button(action: { showSettings = true }, label: {
             VStack(spacing: 3) {
                 Image(systemName: "gearshape.fill")
                     .font(.system(size: 18, weight: .regular))
@@ -88,7 +91,7 @@ struct MainView: View {
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
-        }
+        })
         .buttonStyle(.plain)
         .accessibilityLabel("Settings")
         .keyboardShortcut("3", modifiers: .command)
@@ -97,7 +100,7 @@ struct MainView: View {
     @ViewBuilder
     private func tabButton(tab: MainTab, icon: String, label: String, badge: Int = 0) -> some View {
         let selected = activeTab == tab
-        Button(action: { activeTab = tab }) {
+        Button(action: { activeTab = tab }, label: {
             VStack(spacing: 3) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: icon)
@@ -121,7 +124,7 @@ struct MainView: View {
             }
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
-        }
+        })
         .buttonStyle(.plain)
         .accessibilityLabel(badge > 0 ? "\(label), \(badge) unread" : label)
         .accessibilityAddTraits(selected ? [.isSelected] : [])

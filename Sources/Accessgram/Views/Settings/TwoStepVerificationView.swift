@@ -76,13 +76,11 @@ struct TwoStepVerificationView: View {
     }
 
     private var statusSection: some View {
-        Section(header: { Text("Status") }, footer: {
-            Text(
-                vm.hasPassword
-                    ? "A password is required when logging in from a new device."
-                    : "Add a password as an extra layer of security for your account."
-            )
-        }) {
+        Section(header: Text("Status"), footer: Text(
+            vm.hasPassword
+                ? "A password is required when logging in from a new device."
+                : "Add a password as an extra layer of security for your account."
+        )) {
             HStack(spacing: 12) {
                 Image(systemName: vm.hasPassword ? "lock.fill" : "lock.open")
                     .foregroundStyle(vm.hasPassword ? .green : .secondary)
@@ -136,7 +134,7 @@ struct TwoStepVerificationView: View {
                         hintText = ""
                     }
                 }
-            }) {
+            }, label: {
                 HStack {
                     Spacer()
                     if vm.isSaving {
@@ -146,7 +144,7 @@ struct TwoStepVerificationView: View {
                     }
                     Spacer()
                 }
-            }
+            })
             .disabled(!canSubmit)
             .accessibilityLabel(vm.hasPassword ? "Update password" : "Enable two-step verification")
         }
@@ -154,10 +152,10 @@ struct TwoStepVerificationView: View {
 
     private var removeSection: some View {
         Section {
-            Button(role: .destructive, action: { showRemoveConfirm = true }) {
+            Button(role: .destructive, action: { showRemoveConfirm = true }, label: {
                 Label("Disable Two-Step Verification", systemImage: "lock.open")
                     .foregroundStyle(.red)
-            }
+            })
             .accessibilityHint("Removes the additional login password from your account")
         }
     }

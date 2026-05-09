@@ -49,7 +49,7 @@ struct NewChatView: View {
                 )
             } else {
                 List(filtered) { user in
-                    Button(action: { openChat(with: user) }) {
+                    Button(action: { openChat(with: user) }, label: {
                         HStack(spacing: 10) {
                             AvatarView(title: user.displayName, size: 36)
                             VStack(alignment: .leading, spacing: 2) {
@@ -60,7 +60,7 @@ struct NewChatView: View {
                             }
                             Spacer()
                         }
-                    }
+                    })
                     .buttonStyle(.plain)
                     .accessibilityLabel("Start chat with \(user.displayName)")
                 }

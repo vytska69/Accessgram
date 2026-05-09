@@ -92,11 +92,11 @@ struct MessageInputView: View {
     // MARK: - Attach
 
     private var attachButton: some View {
-        Button(action: { openAttachPanel() }) {
+        Button(action: { openAttachPanel() }, label: {
             Image(systemName: "paperclip")
                 .font(.title3)
                 .foregroundStyle(.secondary)
-        }
+        })
         .buttonStyle(.plain)
         .accessibilityLabel("Add attachment")
         .accessibilityHint("Send a photo or file")
@@ -105,11 +105,11 @@ struct MessageInputView: View {
     // MARK: - Schedule
 
     private var scheduleButton: some View {
-        Button(action: { showSchedulePicker.toggle() }) {
+        Button(action: { showSchedulePicker.toggle() }, label: {
             Image(systemName: scheduledDate != nil ? "calendar.badge.clock" : "calendar")
                 .font(.title3)
                 .foregroundStyle(scheduledDate != nil ? Color.accentColor : .secondary)
-        }
+        })
         .buttonStyle(.plain)
         .accessibilityLabel(scheduledDate != nil ? "Change scheduled send time" : "Schedule message")
         .popover(isPresented: $showSchedulePicker, arrowEdge: .top) {

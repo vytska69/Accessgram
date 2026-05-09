@@ -106,7 +106,7 @@ struct BlockedUsersView: View {
                     userRow(user, vm: vm)
                 }
                 if vm.hasMore {
-                    Button(action: { Task { await vm.loadMore() } }) {
+                    Button(action: { Task { await vm.loadMore() } }, label: {
                         if vm.isLoading {
                             ProgressView().frame(maxWidth: .infinity)
                         } else {
@@ -114,7 +114,7 @@ struct BlockedUsersView: View {
                                 .frame(maxWidth: .infinity)
                                 .foregroundStyle(.secondary)
                         }
-                    }
+                    })
                     .buttonStyle(.plain)
                     .padding(.vertical, 4)
                 }
@@ -145,7 +145,7 @@ struct BlockedUsersView: View {
                 }
             }
             Spacer()
-            Button(action: { Task { await vm.unblock(user) } }) {
+            Button(action: { Task { await vm.unblock(user) } }, label: {
                 Text("Unblock")
                     .font(.caption.bold())
                     .padding(.horizontal, 10)
@@ -153,7 +153,7 @@ struct BlockedUsersView: View {
                     .background(Color.accentColor.opacity(0.12))
                     .foregroundStyle(Color.accentColor)
                     .clipShape(Capsule())
-            }
+            })
             .buttonStyle(.plain)
             .accessibilityLabel("Unblock \(user.name)")
         }

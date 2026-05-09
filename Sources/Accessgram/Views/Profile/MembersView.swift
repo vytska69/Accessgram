@@ -24,7 +24,7 @@ struct MembersView: View {
                             memberRow(member)
                         }
                         if viewModel.hasMoreMembers {
-                            Button(action: { Task { await viewModel.loadMoreMembers() } }) {
+                            Button(action: { Task { await viewModel.loadMoreMembers() } }, label: {
                                 if viewModel.isLoadingMembers {
                                     ProgressView().frame(maxWidth: .infinity)
                                 } else {
@@ -32,7 +32,7 @@ struct MembersView: View {
                                         .frame(maxWidth: .infinity)
                                         .foregroundStyle(.secondary)
                                 }
-                            }
+                            })
                             .buttonStyle(.plain)
                             .padding(.vertical, 4)
                         }

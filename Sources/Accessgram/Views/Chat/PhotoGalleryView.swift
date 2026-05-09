@@ -37,11 +37,11 @@ struct PhotoGalleryView: View {
 
     private var headerBar: some View {
         HStack {
-            Button(action: { dismiss() }) {
+            Button(action: { dismiss() }, label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title2)
                     .foregroundStyle(.white.opacity(0.8))
-            }
+            })
             .buttonStyle(.plain)
             .keyboardShortcut(.escape, modifiers: [])
             .accessibilityLabel("Close gallery")
@@ -101,14 +101,14 @@ struct PhotoGalleryView: View {
                     ? max(0, currentIndex - 1)
                     : min(photoMessages.count - 1, currentIndex + 1)
             }
-        }) {
+        }, label: {
             Image(systemName: isPrev ? "chevron.left" : "chevron.right")
                 .font(.title)
                 .foregroundStyle(.white.opacity(disabled ? 0.15 : 0.75))
                 .frame(width: 48)
                 .frame(maxHeight: .infinity)
                 .contentShape(Rectangle())
-        }
+        })
         .buttonStyle(.plain)
         .disabled(disabled)
         .keyboardShortcut(isPrev ? .leftArrow : .rightArrow, modifiers: [])

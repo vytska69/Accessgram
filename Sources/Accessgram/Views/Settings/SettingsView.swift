@@ -117,8 +117,8 @@ struct SettingsView: View {
 
     private var generalSection: some View {
         let prefs = AppPreferences.shared
-        return Section(header: {
-            HStack {
+        return Section(
+            header: HStack {
                 Text("General")
                 Spacer()
                 if prefs.iCloudAvailable {
@@ -130,12 +130,11 @@ struct SettingsView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-            }
-        }, footer: {
-            Text(prefs.iCloudAvailable
+            },
+            footer: Text(prefs.iCloudAvailable
                  ? "Preferences are synced across your devices via iCloud."
                  : "Sign into iCloud in System Settings to sync preferences across devices.")
-        }) {
+        ) {
             Toggle("Show Format Bar", isOn: Binding(
                 get: { prefs.showFormatBar },
                 set: { prefs.showFormatBar = $0 }
@@ -202,24 +201,24 @@ struct SettingsView: View {
     @ViewBuilder
     private func privacySection(vm: SettingsViewModel) -> some View {
         Section("Privacy") {
-            Button(action: { showTwoStepVerification = true }) {
+            Button(action: { showTwoStepVerification = true }, label: {
                 Label("Two-Step Verification", systemImage: "lock.shield")
-            }
+            })
             .accessibilityLabel("Manage two-step verification password")
-            Button(action: { showBlockedUsers = true }) {
+            Button(action: { showBlockedUsers = true }, label: {
                 Label("Blocked Users", systemImage: "hand.raised")
-            }
+            })
             .accessibilityLabel("View blocked users")
             let settings: [PrivacySetting] = [.lastSeen, .profilePhoto, .calls, .groupInvites, .forwards]
             ForEach(settings, id: \.self) { key in
                 HStack {
                     Text(key.label)
                     Spacer()
-                    Button(action: { privacyExceptionSetting = key }) {
+                    Button(action: { privacyExceptionSetting = key }, label: {
                         Image(systemName: "person.2.badge.gearshape")
                             .foregroundStyle(.secondary)
                             .font(.caption)
-                    }
+                    })
                     .buttonStyle(.plain)
                     .accessibilityLabel("Edit exceptions for \(key.label)")
                     Picker("", selection: Binding(
@@ -261,16 +260,16 @@ struct SettingsView: View {
             Link(destination: URL(string: "https://telegram.org/privacy")!) {
                 Label("Privacy Policy", systemImage: "hand.raised")
             }
-            Button(action: { NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL]) }) {
+            Button(action: { NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL]) }, label: {
                 Label("Reveal Logs in Finder", systemImage: "doc.text.magnifyingglass")
-            }
+            })
             .accessibilityHint("Opens ~/Library/Logs/Accessgram/ in Finder")
             Button(action: {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(Log.fileURL.path, forType: .string)
-            }) {
+            }, label: {
                 Label("Copy Log Path", systemImage: "doc.on.clipboard")
-            }
+            })
             .accessibilityHint("Copies the log file path to clipboard")
         }
     }
@@ -279,10 +278,10 @@ struct SettingsView: View {
 
     private var logOutSection: some View {
         Section {
-            Button(role: .destructive, action: { showLogOutConfirm = true }) {
+            Button(role: .destructive, action: { showLogOutConfirm = true }, label: {
                 Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
                     .foregroundStyle(.red)
-            }
+            })
             .accessibilityHint("Sign out of your Telegram account")
         }
     }
@@ -293,16 +292,14 @@ struct SettingsView: View {
 private extension SettingsView {
     @ViewBuilder
     func sessionsSection(vm: SettingsViewModel) -> some View {
-        Section(header: {
-            HStack {
-                Text("Active Sessions")
-                Spacer()
-                Button(action: { Task { await vm.loadSessions() } }) {
-                    Image(systemName: "arrow.clockwise").font(.caption)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Refresh sessions")
-            }
+        Section(header: HStack {
+            Text("Active Sessions")
+            Spacer()
+            Button(action: { Task { await vm.loadSessions() } }, label: {
+                Image(systemName: "arrow.clockwise").font(.caption)
+            })
+            .buttonStyle(.plain)
+            .accessibilityLabel("Refresh sessions")
         }) {
             ForEach(vm.sessions) { session in
                 HStack {
@@ -326,10 +323,10 @@ private extension SettingsView {
                     }
                     Spacer()
                     if !session.isCurrent {
-                        Button(role: .destructive, action: { Task { await vm.terminateSession(session) } }) {
+                        Button(role: .destructive, action: { Task { await vm.terminateSession(session) } }, label: {
                             Image(systemName: "xmark.circle")
                                 .foregroundStyle(.red)
-                        }
+                        })
                         .buttonStyle(.plain)
                         .accessibilityLabel("Terminate session \(session.displayName)")
                     }
@@ -344,10 +341,10 @@ private extension SettingsView {
             }
 
             if vm.sessions.filter { !$0.isCurrent }.count > 1 {
-                Button(role: .destructive, action: { showTerminateAllConfirm = true }) {
+                Button(role: .destructive, action: { showTerminateAllConfirm = true }, label: {
                     Label("Terminate All Other Sessions", systemImage: "rectangle.portrait.and.arrow.right")
                         .foregroundStyle(.red)
-                }
+                })
             }
         }
     }

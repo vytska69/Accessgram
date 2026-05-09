@@ -192,7 +192,7 @@ struct PrivacyExceptionsView: View {
 
 // MARK: - Contact Picker
 
-private extension Bool: Identifiable {
+extension Bool: Identifiable {
     public var id: Bool { self }
 }
 

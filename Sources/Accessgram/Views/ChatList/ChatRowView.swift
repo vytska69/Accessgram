@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct ChatRowView: View {
     let chat: Chat
 

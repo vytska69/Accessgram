@@ -1,6 +1,7 @@
 import AppKit
 import SwiftUI
 
+@MainActor
 struct MessageInputView: View {
     @Binding var text: String
     let isSending: Bool

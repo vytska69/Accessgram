@@ -340,7 +340,7 @@ private extension SettingsView {
                 ].filter { !$0.isEmpty }.joined(separator: ", "))
             }
 
-            if vm.sessions.filter { !$0.isCurrent }.count > 1 {
+            if vm.sessions.filter({ !$0.isCurrent }).count > 1 {
                 Button(role: .destructive, action: { showTerminateAllConfirm = true }, label: {
                     Label("Terminate All Other Sessions", systemImage: "rectangle.portrait.and.arrow.right")
                         .foregroundStyle(.red)

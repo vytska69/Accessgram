@@ -247,7 +247,8 @@ struct ChatView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Scheduled").font(.caption.bold()).foregroundStyle(Color.accentColor)
                 if let date = viewModel.scheduledDate {
-                    Text(date, style: .dateTime).font(.caption).foregroundStyle(.secondary)
+                    Text(date.formatted(date: .abbreviated, time: .shortened))
+                        .font(.caption).foregroundStyle(.secondary)
                 }
             }
             Spacer()

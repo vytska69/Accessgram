@@ -138,7 +138,8 @@ struct RichTextEditor: NSViewRepresentable {
         let tv = RichNSTextView()
         tv.delegate = context.coordinator
         tv.onSubmit = onSubmit
-        tv.onHeightChange = { [weak context] h in context?.coordinator.parent.editorHeight = h }
+        let coordinator = context.coordinator
+        tv.onHeightChange = { [weak coordinator] h in coordinator?.parent.editorHeight = h }
         tv.isRichText = true
         tv.allowsUndo = true
         tv.font = .systemFont(ofSize: NSFont.systemFontSize)
@@ -172,7 +173,7 @@ struct RichTextEditor: NSViewRepresentable {
             guard let tv = notification.object as? RichNSTextView,
                   let storage = tv.textStorage else { return }
             let text = storage.string
-            let entities = Self.extractEntities(from: storage)
+            let entities = RichNSTextView.extractEntities(from: storage)
             parent.text = text
             parent.onFormattedChange(text, entities)
         }

@@ -29,7 +29,7 @@ final class AppPreferences {
             object: NSUbiquitousKeyValueStore.default,
             queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.load() }
+            Task { @MainActor [weak self] in self?.load() }
         }
         NSUbiquitousKeyValueStore.default.synchronize()
     }

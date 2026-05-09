@@ -92,7 +92,7 @@ struct MessageInputView: View {
     // MARK: - Attach
 
     private var attachButton: some View {
-        Button { openAttachPanel() } label: {
+        Button(action: { openAttachPanel() }) {
             Image(systemName: "paperclip")
                 .font(.title3)
                 .foregroundStyle(.secondary)
@@ -105,7 +105,7 @@ struct MessageInputView: View {
     // MARK: - Schedule
 
     private var scheduleButton: some View {
-        Button { showSchedulePicker.toggle() } label: {
+        Button(action: { showSchedulePicker.toggle() }) {
             Image(systemName: scheduledDate != nil ? "calendar.badge.clock" : "calendar")
                 .font(.title3)
                 .foregroundStyle(scheduledDate != nil ? Color.accentColor : .secondary)

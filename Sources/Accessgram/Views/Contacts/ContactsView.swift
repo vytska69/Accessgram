@@ -77,9 +77,7 @@ struct ContactsView: View {
             )
         } else {
             List(filtered) { contact in
-                Button {
-                    openChat(userId: contact.id)
-                } label: {
+                Button(action: { openChat(userId: contact.id) }) {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(contact.name).font(.headline)
                         if !contact.username.isEmpty {

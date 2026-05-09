@@ -36,9 +36,7 @@ struct ForwardView: View {
                 ContentUnavailableView.search(text: searchText)
             } else {
                 List(filtered, id: \.id) { chat in
-                    Button {
-                        Task { await viewModel.forwardTo(chat: chat) }
-                    } label: {
+                    Button(action: { Task { await viewModel.forwardTo(chat: chat) } }) {
                         HStack(spacing: 10) {
                             AvatarView(title: chat.title, size: 36)
                             Text(chat.title).font(.body)

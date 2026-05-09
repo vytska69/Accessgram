@@ -137,7 +137,7 @@ struct MessageBubbleView: View {
     private var reactionsRow: some View {
         HStack(spacing: 4) {
             ForEach(message.reactions, id: \.emoji) { reaction in
-                Button {
+                Button(action: {
                     Task {
                         if reaction.isChosen {
                             await viewModel.removeReaction(emoji: reaction.emoji, from: message)
@@ -145,7 +145,7 @@ struct MessageBubbleView: View {
                             await viewModel.addReaction(emoji: reaction.emoji, to: message)
                         }
                     }
-                } label: {
+                }) {
                     HStack(spacing: 2) {
                         Text(reaction.emoji).font(.caption)
                         Text("\(reaction.count)").font(.caption2)
@@ -198,12 +198,12 @@ struct MessageBubbleView: View {
         case .sticker(let emoji, let file):
             stickerView(emoji: emoji, file: file)
         case .location(let lat, let lon):
-            Button {
+            Button(action: {
                 let q = "\(lat),\(lon)"
                 if let url = URL(string: "maps://?ll=\(q)&q=Location") {
                     NSWorkspace.shared.open(url)
                 }
-            } label: {
+            }) {
                 VStack(alignment: .leading, spacing: 4) {
                     Label(String(format: "%.5f, %.5f", lat, lon), systemImage: "mappin.circle.fill")
                     Text("Open in Maps")
@@ -214,12 +214,12 @@ struct MessageBubbleView: View {
             .buttonStyle(.plain)
             .accessibilityLabel(String(format: "Location %.5f, %.5f. Open in Maps.", lat, lon))
         case .liveLocation(let lat, let lon):
-            Button {
+            Button(action: {
                 let q = "\(lat),\(lon)"
                 if let url = URL(string: "maps://?ll=\(q)&q=Location") {
                     NSWorkspace.shared.open(url)
                 }
-            } label: {
+            }) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 6) {
                         Label(String(format: "%.5f, %.5f", lat, lon), systemImage: "location.fill")
@@ -357,9 +357,7 @@ struct MessageBubbleView: View {
     @ViewBuilder
     private func videoControls(file: TDFile?, duration: Int) -> some View {
         if let path = videoPath ?? file?.localPath {
-            Button {
-                viewModel.openFile(at: path)
-            } label: {
+            Button(action: { viewModel.openFile(at: path) }) {
                 Image(systemName: "play.circle.fill")
                     .font(.system(size: 44))
                     .foregroundStyle(.white)
@@ -369,14 +367,14 @@ struct MessageBubbleView: View {
         } else if isDownloadingVideo {
             ProgressView().tint(.white)
         } else if let file {
-            Button {
+            Button(action: {
                 Task {
                     isDownloadingVideo = true
                     await viewModel.downloadFile(file)
                     videoPath = viewModel.localPath(for: file)
                     isDownloadingVideo = false
                 }
-            } label: {
+            }) {
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.system(size: 44))
                     .foregroundStyle(.white)
@@ -413,17 +411,13 @@ struct MessageBubbleView: View {
             Spacer()
             if let file {
                 if let path = viewModel.localPath(for: file) {
-                    Button {
-                        viewModel.openFile(at: path)
-                    } label: {
+                    Button(action: { viewModel.openFile(at: path) }) {
                         Image(systemName: "arrow.up.forward.square")
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Open file")
                 } else {
-                    Button {
-                        Task { await viewModel.downloadFile(file) }
-                    } label: {
+                    Button(action: { Task { await viewModel.downloadFile(file) } }) {
                         Image(systemName: "arrow.down.circle")
                     }
                     .buttonStyle(.plain)

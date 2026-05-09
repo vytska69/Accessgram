@@ -171,18 +171,14 @@ struct PrivacyExceptionsView: View {
                 HStack {
                     Text(user.name)
                     Spacer()
-                    Button(role: .destructive) {
-                        Task { await vm.remove(user: user, fromAllow: isAllow) }
-                    } label: {
+                    Button(role: .destructive, action: { Task { await vm.remove(user: user, fromAllow: isAllow) } }) {
                         Image(systemName: "minus.circle.fill").foregroundStyle(.red)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Remove \(user.name) from \(isAllow ? "always allow" : "always restrict")")
                 }
             }
-            Button {
-                addingToAllow = isAllow
-            } label: {
+            Button(action: { addingToAllow = isAllow }) {
                 Label("Add User…", systemImage: "plus.circle")
             }
             .accessibilityLabel("Add user to \(isAllow ? "always allow" : "always restrict") list")
@@ -233,10 +229,7 @@ private struct ContactPickerView: View {
                     .padding(.horizontal)
                     .padding(.top, 8)
                 List(filtered) { user in
-                    Button {
-                        onSelect(user)
-                        dismiss()
-                    } label: {
+                    Button(action: { onSelect(user); dismiss() }) {
                         Text(user.name)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }

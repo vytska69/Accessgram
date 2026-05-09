@@ -169,7 +169,7 @@ struct SettingsView: View {
         Section("Notifications") {
             ForEach(NotificationScope.allCases, id: \.self) { scope in
                 if let s = vm.notifSettings[scope] {
-                    DisclosureGroup {
+                    DisclosureGroup(content: {
                         Toggle("Mute", isOn: Binding(
                             get: { s.muted },
                             set: { v in Task { await vm.setNotification(scope: scope, muted: v) } }
@@ -182,7 +182,7 @@ struct SettingsView: View {
                             get: { s.soundEnabled },
                             set: { v in Task { await vm.setNotification(scope: scope, sound: v) } }
                         ))
-                    } label: {
+                    }, label: {
                         HStack {
                             Label(scope.label, systemImage: s.muted ? "bell.slash" : "bell")
                             Spacer()
@@ -190,7 +190,7 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                    }
+                    })
                     .accessibilityLabel("\(scope.label), \(s.muted ? "muted" : "on")")
                 }
             }
@@ -202,15 +202,11 @@ struct SettingsView: View {
     @ViewBuilder
     private func privacySection(vm: SettingsViewModel) -> some View {
         Section("Privacy") {
-            Button {
-                showTwoStepVerification = true
-            } label: {
+            Button(action: { showTwoStepVerification = true }) {
                 Label("Two-Step Verification", systemImage: "lock.shield")
             }
             .accessibilityLabel("Manage two-step verification password")
-            Button {
-                showBlockedUsers = true
-            } label: {
+            Button(action: { showBlockedUsers = true }) {
                 Label("Blocked Users", systemImage: "hand.raised")
             }
             .accessibilityLabel("View blocked users")
@@ -219,9 +215,7 @@ struct SettingsView: View {
                 HStack {
                     Text(key.label)
                     Spacer()
-                    Button {
-                        privacyExceptionSetting = key
-                    } label: {
+                    Button(action: { privacyExceptionSetting = key }) {
                         Image(systemName: "person.2.badge.gearshape")
                             .foregroundStyle(.secondary)
                             .font(.caption)
@@ -267,16 +261,14 @@ struct SettingsView: View {
             Link(destination: URL(string: "https://telegram.org/privacy")!) {
                 Label("Privacy Policy", systemImage: "hand.raised")
             }
-            Button {
-                NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL])
-            } label: {
+            Button(action: { NSWorkspace.shared.activateFileViewerSelecting([Log.fileURL]) }) {
                 Label("Reveal Logs in Finder", systemImage: "doc.text.magnifyingglass")
             }
             .accessibilityHint("Opens ~/Library/Logs/Accessgram/ in Finder")
-            Button {
+            Button(action: {
                 NSPasteboard.general.clearContents()
                 NSPasteboard.general.setString(Log.fileURL.path, forType: .string)
-            } label: {
+            }) {
                 Label("Copy Log Path", systemImage: "doc.on.clipboard")
             }
             .accessibilityHint("Copies the log file path to clipboard")
@@ -287,9 +279,7 @@ struct SettingsView: View {
 
     private var logOutSection: some View {
         Section {
-            Button(role: .destructive) {
-                showLogOutConfirm = true
-            } label: {
+            Button(role: .destructive, action: { showLogOutConfirm = true }) {
                 Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
                     .foregroundStyle(.red)
             }
@@ -326,9 +316,7 @@ private extension SettingsView {
                     }
                     Spacer()
                     if !session.isCurrent {
-                        Button(role: .destructive) {
-                            Task { await vm.terminateSession(session) }
-                        } label: {
+                        Button(role: .destructive, action: { Task { await vm.terminateSession(session) } }) {
                             Image(systemName: "xmark.circle")
                                 .foregroundStyle(.red)
                         }
@@ -346,9 +334,7 @@ private extension SettingsView {
             }
 
             if vm.sessions.filter { !$0.isCurrent }.count > 1 {
-                Button(role: .destructive) {
-                    showTerminateAllConfirm = true
-                } label: {
+                Button(role: .destructive, action: { showTerminateAllConfirm = true }) {
                     Label("Terminate All Other Sessions", systemImage: "rectangle.portrait.and.arrow.right")
                         .foregroundStyle(.red)
                 }

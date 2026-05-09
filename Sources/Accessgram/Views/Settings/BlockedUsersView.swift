@@ -145,9 +145,7 @@ struct BlockedUsersView: View {
                 }
             }
             Spacer()
-            Button {
-                Task { await vm.unblock(user) }
-            } label: {
+            Button(action: { Task { await vm.unblock(user) } }) {
                 Text("Unblock")
                     .font(.caption.bold())
                     .padding(.horizontal, 10)

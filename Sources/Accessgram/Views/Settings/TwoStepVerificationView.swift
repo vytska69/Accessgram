@@ -128,7 +128,7 @@ struct TwoStepVerificationView: View {
             }
             TextField("Hint (optional)", text: $hintText)
                 .accessibilityLabel("Password hint, optional")
-            Button {
+            Button(action: {
                 Task {
                     await vm.applyPassword(old: oldPassword, new: newPassword, newHint: hintText)
                     if vm.successMessage != nil {
@@ -138,7 +138,7 @@ struct TwoStepVerificationView: View {
                         hintText = ""
                     }
                 }
-            } label: {
+            }) {
                 HStack {
                     Spacer()
                     if vm.isSaving {
@@ -156,9 +156,7 @@ struct TwoStepVerificationView: View {
 
     private var removeSection: some View {
         Section {
-            Button(role: .destructive) {
-                showRemoveConfirm = true
-            } label: {
+            Button(role: .destructive, action: { showRemoveConfirm = true }) {
                 Label("Disable Two-Step Verification", systemImage: "lock.open")
                     .foregroundStyle(.red)
             }

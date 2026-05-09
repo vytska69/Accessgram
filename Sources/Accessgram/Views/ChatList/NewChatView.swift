@@ -49,7 +49,7 @@ struct NewChatView: View {
                 )
             } else {
                 List(filtered) { user in
-                    Button { openChat(with: user) } label: {
+                    Button(action: { openChat(with: user) }) {
                         HStack(spacing: 10) {
                             AvatarView(title: user.displayName, size: 36)
                             VStack(alignment: .leading, spacing: 2) {
@@ -69,11 +69,12 @@ struct NewChatView: View {
         }
         .frame(width: 320, height: 420)
         .task { await loadContacts() }
-        .alert("Error", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
-        }
+        .alert(
+            "Error",
+            isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } }),
+            actions: { Button("OK") { errorMessage = nil } },
+            message: { Text(errorMessage ?? "") }
+        )
     }
 
     private func loadContacts() async {

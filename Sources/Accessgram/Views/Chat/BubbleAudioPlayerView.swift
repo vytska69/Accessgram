@@ -27,9 +27,7 @@ struct BubbleAudioPlayerView: View {
         let elapsed = Int(audioProgress * Double(max(duration, 1)))
         VStack(spacing: 4) {
             HStack(spacing: 8) {
-                Button {
-                    Task { await toggleAudio() }
-                } label: {
+                Button(action: { Task { await toggleAudio() } }) {
                     Image(systemName: isPlayingAudio ? "pause.circle.fill" : "play.circle.fill")
                         .font(.title2)
                         .foregroundStyle(Color.accentColor)
@@ -50,7 +48,7 @@ struct BubbleAudioPlayerView: View {
                 .accessibilityLabel("Playback position")
                 .accessibilityValue("\(formatSeconds(elapsed)) of \(formatSeconds(duration))")
 
-                Button { cycleSpeed() } label: {
+                Button(action: { cycleSpeed() }) {
                     Text(speedLabel)
                         .font(.caption.bold().monospacedDigit())
                         .frame(minWidth: 30)

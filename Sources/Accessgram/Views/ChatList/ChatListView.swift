@@ -154,9 +154,7 @@ struct ChatListView: View {
                         .padding(.vertical, 8)
                 } else {
                     ForEach(viewModel.messageSearchResults) { result in
-                        Button {
-                            selectedChatId = result.chatId
-                        } label: {
+                        Button(action: { selectedChatId = result.chatId }) {
                             VStack(alignment: .leading, spacing: 2) {
                                 HStack {
                                     Text(result.chatTitle)

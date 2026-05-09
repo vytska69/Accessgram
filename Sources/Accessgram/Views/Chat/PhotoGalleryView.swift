@@ -37,7 +37,7 @@ struct PhotoGalleryView: View {
 
     private var headerBar: some View {
         HStack {
-            Button { dismiss() } label: {
+            Button(action: { dismiss() }) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title2)
                     .foregroundStyle(.white.opacity(0.8))
@@ -95,13 +95,13 @@ struct PhotoGalleryView: View {
     private func navButton(direction: Direction) -> some View {
         let isPrev = direction == .previous
         let disabled = isPrev ? currentIndex == 0 : currentIndex == photoMessages.count - 1
-        return Button {
+        return Button(action: {
             withAnimation(.easeInOut(duration: 0.15)) {
                 currentIndex = isPrev
                     ? max(0, currentIndex - 1)
                     : min(photoMessages.count - 1, currentIndex + 1)
             }
-        } label: {
+        }) {
             Image(systemName: isPrev ? "chevron.left" : "chevron.right")
                 .font(.title)
                 .foregroundStyle(.white.opacity(disabled ? 0.15 : 0.75))

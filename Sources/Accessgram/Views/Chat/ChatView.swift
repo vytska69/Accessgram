@@ -83,12 +83,10 @@ struct ChatView: View {
             isPresented: Binding(
                 get: { viewModel.errorMessage != nil },
                 set: { if !$0 { viewModel.errorMessage = nil } }
-            )
-        ) {
-            Button("OK") { viewModel.errorMessage = nil }
-        } message: {
-            Text(viewModel.errorMessage ?? "")
-        }
+            ),
+            actions: { Button("OK") { viewModel.errorMessage = nil } },
+            message: { Text(viewModel.errorMessage ?? "") }
+        )
     }
 
     // MARK: - Pinned Banner
@@ -113,11 +111,11 @@ struct ChatView: View {
             .textFieldStyle(.plain)
             .onSubmit { Task { await viewModel.runSearch() } }
             .accessibilityLabel("Search messages")
-            Button {
+            Button(action: {
                 viewModel.showSearch = false
                 viewModel.searchQuery = ""
                 viewModel.searchResults = []
-            } label: {
+            }) {
                 Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
@@ -194,10 +192,10 @@ struct ChatView: View {
     @ViewBuilder
     private var loadMoreButton: some View {
         if viewModel.hasMoreMessages && !viewModel.showSearch {
-            Button {
+            Button(action: {
                 pendingScrollAnchor = viewModel.messages.first?.id
                 Task { await viewModel.loadOlderMessages() }
-            } label: {
+            }) {
                 if viewModel.isLoadingMore {
                     ProgressView().scaleEffect(0.7)
                 } else {
@@ -298,27 +296,27 @@ struct ChatView: View {
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
         ToolbarItem(placement: .primaryAction) {
-            Button { inputFocused = true } label: {
+            Button(action: { inputFocused = true }) {
                 Image(systemName: "square.and.pencil")
             }
             .accessibilityLabel("Focus message input")
             .keyboardShortcut("n", modifiers: .command)
         }
         ToolbarItem(placement: .primaryAction) {
-            Button { scrollToBottomTrigger += 1 } label: {
+            Button(action: { scrollToBottomTrigger += 1 }) {
                 Image(systemName: "arrow.down.to.line")
             }
             .accessibilityLabel("Jump to latest message")
         }
         ToolbarItem(placement: .primaryAction) {
-            Button { viewModel.showSearch.toggle() } label: {
+            Button(action: { viewModel.showSearch.toggle() }) {
                 Image(systemName: "magnifyingglass")
             }
             .accessibilityLabel("Search in chat")
             .keyboardShortcut("f", modifiers: .command)
         }
         ToolbarItem(placement: .primaryAction) {
-            Button { showProfile = true } label: {
+            Button(action: { showProfile = true }) {
                 Image(systemName: "person.circle")
             }
             .accessibilityLabel("View profile")

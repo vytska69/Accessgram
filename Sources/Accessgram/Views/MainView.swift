@@ -97,9 +97,7 @@ struct MainView: View {
     @ViewBuilder
     private func tabButton(tab: MainTab, icon: String, label: String, badge: Int = 0) -> some View {
         let selected = activeTab == tab
-        Button {
-            activeTab = tab
-        } label: {
+        Button(action: { activeTab = tab }) {
             VStack(spacing: 3) {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: icon)

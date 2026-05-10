@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContactsView: View {
     @Environment(AppViewModel.self) private var app
+    @Binding var activeTab: MainTab
     @Binding var selectedChatId: Int64?
 
     @State private var contacts: [ContactEntry] = []
@@ -136,9 +137,9 @@ struct ContactsView: View {
         Task {
             if let chat = try? await app.client.createPrivateChat(userId: userId) {
                 if let id = chat["id"] as? Int64 {
-                    selectedChatId = id
-                    // Make sure it's in the chat list
                     await app.chatListViewModel.addOrUpdate(from: chat)
+                    selectedChatId = id
+                    activeTab = .messages
                 }
             }
         }
